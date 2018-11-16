@@ -27,6 +27,7 @@
 #include "llvm/ADT/Twine.h"
 
 #include "../Expr/ArrayExprOptimizer.h"
+#include "../Encode/Symbolic.h"
 #include <map>
 #include <memory>
 #include <set>
@@ -73,6 +74,7 @@ namespace klee {
   class TimingSolver;
   class TreeStreamWriter;
   class MergeHandler;
+  class Symbolic;
   template<class T> class ref;
 
 
@@ -356,23 +358,12 @@ private:
   // Used for testing.
   ref<Expr> replaceReadWithSymbolic(ExecutionState &state, ref<Expr> e);
 
-  const Cell& eval(KInstruction *ki, unsigned index, 
-                   ExecutionState &state) const;
-
   Cell& getArgumentCell(ExecutionState &state,
                         KFunction *kf,
                         unsigned index) {
     return state.stack.back().locals[kf->getArgRegister(index)];
   }
 
-  Cell& getDestCell(ExecutionState &state,
-                    KInstruction *target) {
-    return state.stack.back().locals[target->dest];
-  }
-
-  void bindLocal(KInstruction *target, 
-                 ExecutionState &state, 
-                 ref<Expr> value);
   void bindArgument(KFunction *kf, 
                     unsigned index,
                     ExecutionState &state,
@@ -542,6 +533,19 @@ public:
 
   /// Returns the errno location in memory of the state
   int *getErrnoLocation(const ExecutionState &state) const;
+    
+  Symbolic symbolic;
+  bool getMemoryObject(ObjectPair& op, ExecutionState& state, AddressSpace *addressSpace, ref<Expr> address);
+  bool isGlobalMO(const MemoryObject* mo);
+  const Cell& eval(KInstruction *ki, unsigned index,
+                   ExecutionState &state) const;
+  Cell& getDestCell(ExecutionState &state,
+                    KInstruction *target) {
+    return state.stack.back().locals[target->dest];
+  }
+  void bindLocal(KInstruction *target,
+                 ExecutionState &state,
+                 ref<Expr> value);
 };
   
 } // End klee namespace

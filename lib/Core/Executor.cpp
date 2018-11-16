@@ -338,7 +338,7 @@ Executor::Executor(LLVMContext &ctx, const InterpreterOptions &opts,
       pathWriter(0), symPathWriter(0), specialFunctionHandler(0),
       processTree(0), replayKTest(0), replayPath(0), usingSeeds(0),
       atMemoryLimit(false), inhibitForking(false), haltExecution(false),
-      ivcEnabled(false), debugLogBuffer(debugBufferString) {
+      ivcEnabled(false), debugLogBuffer(debugBufferString), symbolic(this){
 
 
   const time::Span maxCoreSolverTime(MaxCoreSolverTime);
@@ -1602,7 +1602,35 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), *branches.first);
       if (branches.second)
         transferToBasicBlock(bi->getSuccessor(1), bi->getParent(), *branches.second);
+      if (branches.first){
+    	  branches.first->encode.checkBB(bi->getSuccessor(0)->getName());
+      }
+      if (branches.second){
+    	  branches.second->encode.checkBB(bi->getSuccessor(1)->getName());
+      }
+      if (cond->getKind() != Expr::Constant) {
+          if (branches.first){
+        	  branches.first->encode.addBr(cond, true, bi->getSuccessor(0)->getName(), bi->getSuccessor(1)->getName());
+        	  branches.first->encode.checkBr();
+          }
+          if (branches.second){
+        	  branches.second->encode.addBr(cond, false, bi->getSuccessor(1)->getName(), bi->getSuccessor(0)->getName());
+        	  branches.second->encode.checkBr();
+          }
+      }
+
+      llvm::errs() << "first = " << branches.first << "\n";
+      llvm::errs() << "second = " << branches.second << "\n";
+      llvm::errs() << "br cond = ";
+      cond->dump();
+      llvm::errs() << "br label 0 = ";
+      bi->getSuccessor(0)->dump();
+      llvm::errs() << "br label 1 name = " << bi->getSuccessor(0)->getName() << "\n";
+      llvm::errs() << "br label 1 = ";
+      bi->getSuccessor(1)->dump();
+      llvm::errs() << "br label 1 name = " << bi->getSuccessor(1)->getName() << "\n";
     }
+
     break;
   }
   case Instruction::IndirectBr: {
@@ -2150,6 +2178,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   case Instruction::Load: {
     ref<Expr> base = eval(ki, 0, state).value;
     executeMemoryOperation(state, false, base, 0, ki);
+    symbolic.load(state, ki);
     break;
   }
   case Instruction::Store: {
@@ -3996,4 +4025,27 @@ int *Executor::getErrnoLocation(const ExecutionState &state) const {
 Interpreter *Interpreter::create(LLVMContext &ctx, const InterpreterOptions &opts,
                                  InterpreterHandler *ih) {
   return new Executor(ctx, opts, ih);
+}
+
+bool Executor::getMemoryObject(ObjectPair &op, ExecutionState &state, AddressSpace *addressSpace, ref<Expr> address) {
+	bool success;
+	if (!addressSpace->resolveOne(state, solver, address, op, success)) {
+		address = toConstant(state, address, "resolveOne failure");
+		success = addressSpace->resolveOne(cast<ConstantExpr>(address), op);
+	}
+	return success;
+}
+
+bool Executor::isGlobalMO(const MemoryObject* mo) {
+	bool result;
+	if (mo->isGlobal) {
+		result = true;
+	} else {
+		if (mo->isLocal) {
+			result = false;
+		} else {
+			result = true;
+		}
+	}
+	return result;
 }
