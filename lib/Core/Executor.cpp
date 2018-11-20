@@ -1602,23 +1602,35 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), *branches.first);
       if (branches.second)
         transferToBasicBlock(bi->getSuccessor(1), bi->getParent(), *branches.second);
-      if (branches.first){
-    	  branches.first->encode.checkBB(bi->getSuccessor(0)->getName());
-      }
-      if (branches.second){
-    	  branches.second->encode.checkBB(bi->getSuccessor(1)->getName());
-      }
+
+
       if (cond->getKind() != Expr::Constant) {
           if (branches.first){
-        	  branches.first->encode.addBr(cond, true, bi->getSuccessor(0)->getName(), bi->getSuccessor(1)->getName());
-        	  branches.first->encode.checkBr();
+        	  branches.first->encode.addBrConstraint(cond, true, bi->getSuccessor(0)->getName(), bi->getSuccessor(1)->getName());
           }
           if (branches.second){
-        	  branches.second->encode.addBr(cond, false, bi->getSuccessor(1)->getName(), bi->getSuccessor(0)->getName());
-        	  branches.second->encode.checkBr();
+        	  branches.second->encode.addBrConstraint(cond, false, bi->getSuccessor(1)->getName(), bi->getSuccessor(0)->getName());
           }
       }
+      int result;
+      if (branches.first){
+    	  result = branches.first->encode.checkList(bi->getSuccessor(0)->getName());
+    	  if(result == -1){
+    		  terminateState(*branches.first);
+    	  }else if(result == 0){
+    		  exit(0);
+    	  }
+      }
+      if (branches.second){
+    	  result = branches.second->encode.checkList(bi->getSuccessor(1)->getName());
+    	  if(result == -1){
+    		  terminateState(*branches.second);
+    	  }else if(result == 0){
+    		  exit(0);
+    	  }
+      }
 
+#ifdef DEBUG
       llvm::errs() << "first = " << branches.first << "\n";
       llvm::errs() << "second = " << branches.second << "\n";
       llvm::errs() << "br cond = ";
@@ -1629,6 +1641,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
       llvm::errs() << "br label 1 = ";
       bi->getSuccessor(1)->dump();
       llvm::errs() << "br label 1 name = " << bi->getSuccessor(1)->getName() << "\n";
+#endif
     }
 
     break;
