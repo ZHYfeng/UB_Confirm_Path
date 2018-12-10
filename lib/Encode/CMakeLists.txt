@@ -10,6 +10,7 @@ klee_add_component(kleeEncode
   Encode.cpp
   Symbolic.cpp
   KQuery2Z3.cpp
+  json11.cpp
 )
 
 set(LLVM_COMPONENTS

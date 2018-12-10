@@ -546,6 +546,11 @@ public:
   void bindLocal(KInstruction *target,
                  ExecutionState &state,
                  ref<Expr> value);
+
+  MemoryObject* createSymbolicArg(ExecutionState &state, Type *ty,
+		  Instruction *first);
+
+  int argNum;
 };
   
 } // End klee namespace

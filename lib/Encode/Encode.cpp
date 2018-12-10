@@ -12,6 +12,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "json11.hpp"
+
 using namespace llvm;
 using namespace klee;
 
@@ -25,9 +27,12 @@ cl::opt<std::string> BlackList("black-list", cl::desc("The path of black list"),
 cl::opt<std::string> UseList("use-list", cl::desc("The path of use list"),
 		cl::init("./use-list"));
 
+cl::opt<std::string> jsonFile("json-file", cl::desc("The path of json file"),
+		cl::init("./jsonfile"));
+
 Encode::Encode() :
 		z3_ctxx(new context()), z3_solverr(*z3_ctxx), kq(*z3_ctxx), flag(1) {
-	addList();
+//	addList();
 }
 
 Encode::Encode(const Encode &e) :
@@ -43,7 +48,15 @@ Encode::~Encode() {
 
 void Encode::addList() {
 
+	std::ifstream jsonfile;
 	std::string line;
+	std::string err;
+		while (getline(jsonfile, line)) {
+			const auto json = json11::Json::parse(line, err);
+			std::cerr << "whitelist: " << json["whitelist"].dump() << "\n";
+		}
+		jsonfile.close();
+
 
 #ifdef DEBUG
 	std::cerr << "whitelist" << "\n";
@@ -90,7 +103,7 @@ void Encode::addList() {
 		}
 		uselist.close();
 	} else {
-		std::cerr << "Unable to open uselist";
+		std::cerr << "Unable to open uselist" << "\n";
 	}
 
 	expr constraint = z3_ctxx->bool_val(1);

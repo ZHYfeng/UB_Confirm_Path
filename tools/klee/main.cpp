@@ -22,6 +22,7 @@
 #include "klee/Internal/System/Time.h"
 #include "klee/Interpreter.h"
 #include "klee/Statistics.h"
+#include "../lib/Encode/json11.hpp"
 
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
@@ -70,12 +71,21 @@ using namespace klee;
 
 namespace {
   cl::opt<std::string>
-  InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
+  Json("json",
+               cl::desc("the json object"),
+               cl::init(""));
 
   cl::opt<std::string>
-  EntryPoint("entry-point",
-               cl::desc("Consider the function with the given name as the entrypoint"),
-               cl::init("main"));
+  InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
+
+//  std::string InputFile;
+
+//  cl::opt<std::string>
+//  EntryPoint("entry-point",
+//               cl::desc("Consider the function with the given name as the entrypoint"),
+//               cl::init("main"));
+
+  std::string EntryPoint;
 
   cl::opt<std::string>
   RunInDir("run-in", cl::desc("Change to the given directory prior to executing"));
@@ -1065,6 +1075,24 @@ int main(int argc, char **argv, char **envp) {
   sys::PrintStackTraceOnErrorSignal();
 #endif
 
+	std::string err;
+
+	const auto json = json11::Json::parse(Json, err);
+
+	std::string temp = "./" + json["bc"].dump();
+	temp.erase(temp.begin()+2,temp.begin()+3);
+	temp.erase(temp.end()-1,temp.end());
+	InputFile = temp;
+
+	std::cerr << "bc : " << InputFile << "\n";
+
+	EntryPoint = json["function"].dump();
+	EntryPoint.erase(EntryPoint.begin(),EntryPoint.begin()+1);
+	EntryPoint.erase(EntryPoint.end()-1,EntryPoint.end());
+
+	std::cerr << "function : " << EntryPoint << "\n";
+
+
   if (Watchdog) {
     if (MaxTime.empty()) {
       klee_error("--watchdog used without --max-time");
@@ -1291,6 +1319,8 @@ int main(int argc, char **argv, char **envp) {
     handler->getInfoStream() << startInfo.str();
     handler->getInfoStream().flush();
   }
+
+//  interpreter->json(Json);
 
   if (!ReplayKTestDir.empty() || !ReplayKTestFile.empty()) {
     assert(SeedOutFile.empty());

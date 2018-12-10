@@ -33,6 +33,7 @@ private:
 	std::map<uint64_t, unsigned> loadRecord;
 	std::map<uint64_t, unsigned> storeRecord;
 	Executor* executor;
+	std::string json;
 
 public:
 	void load(ExecutionState &state, KInstruction *ki);

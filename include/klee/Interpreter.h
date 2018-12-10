@@ -51,6 +51,7 @@ class Interpreter {
 public:
   /// ModuleOptions - Module level options which can be set when
   /// registering a module with the interpreter.
+	std::string json;
   struct ModuleOptions {
     std::string LibraryDir;
     std::string EntryPoint;

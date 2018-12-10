@@ -10,6 +10,8 @@
 #ifndef KLEE_UTIL_BITARRAY_H
 #define KLEE_UTIL_BITARRAY_H
 
+#include <iostream>
+
 namespace klee {
 
   // XXX would be nice not to have
@@ -23,7 +25,12 @@ protected:
   static uint32_t length(unsigned size) { return (size+31)/32; }
 
 public:
-  BitArray(unsigned size, bool value = false) : bits(new uint32_t[length(size)]) {
+//  BitArray(unsigned size, bool value = false) : bits(new uint32_t[length(size)]) {
+  BitArray(unsigned size, bool value = false) {
+	  std::cerr << "size : " << size << "\n";
+	  std::cerr << "length(size) : " << length(size) << "\n";
+	  bits = new uint32_t[length(size)];
+
     memset(bits, value?0xFF:0, sizeof(*bits)*length(size));
   }
   BitArray(const BitArray &b, unsigned size) : bits(new uint32_t[length(size)]) {
