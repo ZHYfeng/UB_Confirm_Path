@@ -7,7 +7,8 @@
 
 #include "Symbolic.h"
 
-#include <llvm/IR/Instruction.h>
+#include <llvm/ADT/StringRef.h>
+#include <llvm/IR/Instructions.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
 #include <llvm/Support/Casting.h>
@@ -15,7 +16,6 @@
 #include <cassert>
 #include <sstream>
 #include <utility>
-#include <vector>
 
 #include "../../include/klee/Internal/Module/KInstruction.h"
 #include "../Core/AddressSpace.h"
@@ -127,6 +127,9 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 			isGlobal = executor->isGlobalMO(mo);
 			if (isGlobal) {
 				unsigned loadTime = getLoadTime(key);
+				LoadInst *li = cast<LoadInst>(ki->inst);
+				std::cerr << "i : " << li->getOpcodeName() << "\n";
+				std::cerr << "i : " << li->getOpcodeName() << "\n";
 				GlobalName = createGlobalVarFullName(mo->id, key, isGlobal,
 						loadTime, false);
 			}
@@ -144,6 +147,8 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 					ki->inst->getType());
 			ref<Expr> value = executor->getDestCell(state, ki).value;
 			ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+			std::cerr << " load symbolic value : ";
+			symbolic->dump();
 			executor->bindLocal(ki, state, symbolic);
 		}
 	}

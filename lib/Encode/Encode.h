@@ -17,7 +17,7 @@
 #include "../../include/klee/util/Ref.h"
 #include "KQuery2Z3.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 using namespace z3;
 
@@ -36,6 +36,7 @@ public:
 	std::vector<expr> constraintExpr;
 	std::vector<bool> path;
 	unsigned int flag;
+	std::string Json;
 	std::vector<std::string> whiteList;
 	std::vector<std::string> blackList;
 	std::vector<std::string> useList;

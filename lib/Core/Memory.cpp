@@ -97,16 +97,13 @@ ObjectState::ObjectState(const MemoryObject *mo)
   : copyOnWriteOwner(0),
     refCount(0),
     object(mo),
-//    concreteStore(new uint8_t[mo->size]),
+    concreteStore(new uint8_t[mo->size]),
     concreteMask(0),
     flushMask(0),
     knownSymbolics(0),
     updates(0, 0),
     size(mo->size),
     readOnly(false) {
-	concreteStore = (unsigned char *)malloc(mo->size*sizeof(unsigned char));
-	std::cerr << "size : " << size <<  "\n";
-  std::cerr << "1 ObjectState(const MemoryObject *mo)" <<  "\n";
   mo->refCount++;
   if (!UseConstantArrays) {
     static unsigned id = 0;
@@ -114,18 +111,7 @@ ObjectState::ObjectState(const MemoryObject *mo)
         getArrayCache()->CreateArray("tmp_arr" + llvm::utostr(++id), size);
     updates = UpdateList(array, 0);
   }
-
-  std::cerr << "2 ObjectState(const MemoryObject *mo)" <<  "\n";
-  printf("concreteStore : %x\n", concreteStore);
-  std::cerr << "concreteStore : " << concreteStore <<  "\n";
-  for(unsigned int i=0;i<size;i++){
-	  std::cerr << "i : " << i <<  "\n";
-	  concreteStore[i]=0;
-  }
-//  memset(concreteStore, 0, size);
-  printf("concreteStore : %x\n", concreteStore);
-  std::cerr << "concreteStore : " << concreteStore <<  "\n";
-  std::cerr << "3 ObjectState(const MemoryObject *mo)" <<  "\n";
+  memset(concreteStore, 0, size);
 }
 
 
@@ -404,9 +390,7 @@ void ObjectState::markByteUnflushed(unsigned offset) {
 
 void ObjectState::markByteFlushed(unsigned offset) {
   if (!flushMask) {
-	  std::cerr << "1 new BitArray(size, false) : " << size << "\n";
     flushMask = new BitArray(size, false);
-    	std::cerr << "2 new BitArray(size, false) : " << size << "\n";
   } else {
     flushMask->unset(offset);
   }

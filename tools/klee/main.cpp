@@ -78,14 +78,10 @@ namespace {
   cl::opt<std::string>
   InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
 
-//  std::string InputFile;
-
-//  cl::opt<std::string>
-//  EntryPoint("entry-point",
-//               cl::desc("Consider the function with the given name as the entrypoint"),
-//               cl::init("main"));
-
-  std::string EntryPoint;
+  cl::opt<std::string>
+  EntryPoint("entry-point",
+               cl::desc("Consider the function with the given name as the entrypoint"),
+               cl::init("main"));
 
   cl::opt<std::string>
   RunInDir("run-in", cl::desc("Change to the given directory prior to executing"));
@@ -1078,7 +1074,7 @@ int main(int argc, char **argv, char **envp) {
 	std::string err;
 
 	const auto json = json11::Json::parse(Json, err);
-
+//
 	std::string temp = "./" + json["bc"].dump();
 	temp.erase(temp.begin()+2,temp.begin()+3);
 	temp.erase(temp.end()-1,temp.end());
@@ -1286,6 +1282,7 @@ int main(int argc, char **argv, char **envp) {
   KleeHandler *handler = new KleeHandler(pArgc, pArgv);
   Interpreter *interpreter =
     theInterpreter = Interpreter::create(ctx, IOpts, handler);
+  interpreter->json = Json;
   assert(interpreter);
   handler->setInterpreter(interpreter);
 

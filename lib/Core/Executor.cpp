@@ -557,8 +557,6 @@ void Executor::initializeGlobals(ExecutionState &state) {
     globalAddresses.insert(std::make_pair(f, addr));
   }
 
-  std::cerr << "finsih 2.1" <<  "\n";
-
 #ifndef WINDOWS
   int *errno_addr = getErrnoLocation(state);
   MemoryObject *errnoObj =
@@ -632,7 +630,6 @@ void Executor::initializeGlobals(ExecutionState &state) {
         klee_warning("Unable to find size for global variable: %.*s (use will result in out of bounds access)",
 			(int)i->getName().size(), i->getName().data());
       }
-
       MemoryObject *mo = memory->allocate(size, /*isLocal=*/false,
                                           /*isGlobal=*/true, /*allocSite=*/v,
                                           /*alignment=*/globalObjectAlignment);
@@ -649,12 +646,13 @@ void Executor::initializeGlobals(ExecutionState &state) {
         } else {
           addr = externalDispatcher->resolveSymbol(i->getName());
         }
-        if (!addr)
-          klee_error("unable to load symbol(%s) while initializing globals.", 
+        if (!addr) {
+        	klee_warning("unable to load symbol(%s) while initializing globals.",
                      i->getName().data());
-
-        for (unsigned offset=0; offset<mo->size; offset++)
-          os->write8(offset, ((unsigned char*)addr)[offset]);
+        } else {
+            for (unsigned offset=0; offset<mo->size; offset++)
+              os->write8(offset, ((unsigned char*)addr)[offset]);
+        }
       }
     } else {
       Type *ty = i->getType()->getElementType();
@@ -673,8 +671,6 @@ void Executor::initializeGlobals(ExecutionState &state) {
     }
   }
   
-  std::cerr << "finsih 2.2" <<  "\n";
-
   // link aliases to their definitions (if bound)
   for (Module::alias_iterator i = m->alias_begin(), ie = m->alias_end(); 
        i != ie; ++i) {
@@ -1516,7 +1512,6 @@ static inline const llvm::fltSemantics * fpWidthToSemantics(unsigned width) {
 
 void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   Instruction *i = ki->inst;
-
   i->dump();
 
   switch (i->getOpcode()) {
@@ -1642,12 +1637,12 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
       llvm::errs() << "second = " << branches.second << "\n";
       llvm::errs() << "br cond = ";
       cond->dump();
+      llvm::errs() << "br label 0 name = " << bi->getSuccessor(0)->getName() << "\n";
       llvm::errs() << "br label 0 = ";
       bi->getSuccessor(0)->dump();
-      llvm::errs() << "br label 1 name = " << bi->getSuccessor(0)->getName() << "\n";
+      llvm::errs() << "br label 1 name = " << bi->getSuccessor(1)->getName() << "\n";
       llvm::errs() << "br label 1 = ";
       bi->getSuccessor(1)->dump();
-      llvm::errs() << "br label 1 name = " << bi->getSuccessor(1)->getName() << "\n";
 #endif
     }
 
@@ -2198,12 +2193,17 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   case Instruction::Load: {
     ref<Expr> base = eval(ki, 0, state).value;
     executeMemoryOperation(state, false, base, 0, ki);
+    ref<Expr> value = getDestCell(state, ki).value;
+    std::cerr << "load value :";
+    value->dump();
     symbolic.load(state, ki);
     break;
   }
   case Instruction::Store: {
     ref<Expr> base = eval(ki, 1, state).value;
     ref<Expr> value = eval(ki, 0, state).value;
+    std::cerr << "store value :";
+    value->dump();
     executeMemoryOperation(state, true, base, value, 0);
     break;
   }
@@ -2916,7 +2916,6 @@ void Executor::run(ExecutionState &initialState) {
     ExecutionState &state = searcher->selectState();
     KInstruction *ki = state.pc;
     stepInstruction(state);
-
     executeInstruction(state, ki);
     processTimers(&state, maxInstructionTime);
 
@@ -3318,9 +3317,7 @@ ObjectState *Executor::bindObjectInState(ExecutionState &state,
                                          bool isLocal,
                                          const Array *array) {
 
-	std::cerr << "1 bindObjectInState" <<  "\n";
   ObjectState *os = array ? new ObjectState(mo, array) : new ObjectState(mo);
-  	std::cerr << "2 bindObjectInState" <<  "\n";
   state.addressSpace.bindObject(mo, os);
   // Its possible that multiple bindings of the same mo in the state
   // will put multiple copies on this list, but it doesn't really
@@ -3328,7 +3325,6 @@ ObjectState *Executor::bindObjectInState(ExecutionState &state,
   // on function return.
   if (isLocal)
     state.stack.back().allocas.push_back(mo);
-
   return os;
 }
 
@@ -3708,27 +3704,32 @@ void Executor::executeMakeSymbolic(ExecutionState &state,
   }
 }
 
-MemoryObject* Executor::createSymbolicArg(ExecutionState &state, Type *ty,
+ref<Expr> Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 		Instruction *first) {
 
-	unsigned NumPtrBytes = Context::get().getPointerWidth() / 8;
-	MemoryObject *mo = 0;
-
+	ref<Expr> expr;
+	unsigned int size = 0;
+#if DEBUG
 	ty->dump();
 	std::cerr << "getTypeID : ";
 	std::cerr << ty->getTypeID() << "\n";
+#endif
 
 	switch (ty->getTypeID()) {
 	case llvm::Type::PointerTyID: {
 		if (PointerType *pt = dyn_cast<PointerType>(ty)) {
-
-			mo = memory->allocate(NumPtrBytes,
+			Type *kind = pt->getElementType();
+			if (kind->isSized()) {
+				size = kmodule->targetData->getTypeStoreSize(kind);
+		    }
+			MemoryObject *mo = memory->allocate(size,
 			/*isLocal=*/false, /*isGlobal=*/true,
 			/*allocSite=*/first, /*alignment=*/8);
-			Type *kind = pt->getElementType();
-			MemoryObject *kmo = createSymbolicArg(state, kind, first);
-			ObjectState *os = bindObjectInState(state, mo, false);
-			os->write(NumPtrBytes, kmo->getBaseExpr());
+			bindObjectInState(state, mo, false);
+			expr = mo->getBaseExpr();
+//			ObjectState *os = bindObjectInState(state, mo, false);
+//			ref<Expr> kexpr = createSymbolicArg(state, kind, first);
+//			os->write(NumPtrBytes, kexpr);
 
 		}
 		break;
@@ -3740,27 +3741,34 @@ MemoryObject* Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 			ss << "arg_" << argNum;
 			std::string name = ss.str();
 			argNum++;
-			mo = memory->allocate(it->getBitWidth(),
-			/*isLocal=*/false, /*isGlobal=*/true,
+			if (ty->isSized()) {
+				size = kmodule->targetData->getTypeStoreSize(ty);
+		    }
+			MemoryObject *mo = memory->allocate(size,
+			/*isLocal=*/false, /*isGlobal=*/false,
 			/*allocSite=*/first, /*alignment=*/8);
 
-			std::cerr << "it name : " << name << "\n";
-			std::cerr << "mo : " << mo->id << "\n";
-
-//			executeMakeSymbolic(state, mo, name);
-
-
+			executeMakeSymbolic(state, mo, name);
+			const ObjectState *os = state.addressSpace.findObject(mo);
+			expr = os->read(0, it->getBitWidth());
 
 		}
 		break;
 	}
 	case llvm::Type::StructTyID: {
 		if (StructType *st = dyn_cast<StructType>(ty)) {
-
-			for(Type::subtype_iterator ae = st->element_end(); ae != st->element_begin(); ){
-				ae--;
-				mo = createSymbolicArg(state, *ae, first);
+			if (ty->isSized()) {
+				size = kmodule->targetData->getTypeStoreSize(ty);
+		    }
+			MemoryObject *mo = memory->allocate(size,
+						/*isLocal=*/false, /*isGlobal=*/true,
+						/*allocSite=*/first, /*alignment=*/8);
+			for(Type::subtype_iterator ae = st->element_begin(); ae != st->element_end(); ){
+				ae++;
+//				MemoryObject *mo = createSymbolicArg(state, *ae, first);
 			}
+			expr = mo->getBaseExpr();
+			assert("StructTyID" && 0);
 
 		}
 		break;
@@ -3769,8 +3777,12 @@ MemoryObject* Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 
 	}
 	}
-
-	return mo;
+#if DEBUG
+	std::cerr << "expr : ";
+	expr->dump();
+	std::cerr << "size : " << size << "\n";
+#endif
+	return expr;
 }
 
 /***/
@@ -3796,47 +3808,18 @@ void Executor::runFunctionAsMain(Function *f,
   for (envc=0; envp[envc]; ++envc) ;
 
   ExecutionState *state = new ExecutionState(kmodule->functionMap[f]);
+  state->encode.Json = this->json;
+  state->encode.addList();
 //  unsigned NumPtrBytes = Context::get().getPointerWidth() / 8;
   KFunction *kf = kmodule->functionMap[f];
   assert(kf);
   Function::arg_iterator ai = f->arg_begin(), ae = f->arg_end();
 
-//  if (ai!=ae) {
-//    arguments.push_back(ConstantExpr::alloc(argc, Expr::Int32));
-//    if (++ai!=ae) {
-//      Instruction *first = &*(f->begin()->begin());
-//      argvMO =
-//          memory->allocate((argc + 1 + envc + 1 + 1) * NumPtrBytes,
-//                           /*isLocal=*/false, /*isGlobal=*/true,
-//                           /*allocSite=*/first, /*alignment=*/8);
-//
-//      if (!argvMO)
-//        klee_error("Could not allocate memory for function arguments");
-//
-//      arguments.push_back(argvMO->getBaseExpr());
-//
-//      if (++ai!=ae) {
-//        uint64_t envp_start = argvMO->address + (argc+1)*NumPtrBytes;
-//        arguments.push_back(Expr::createPointer(envp_start));
-//
-//        if (++ai!=ae)
-//          klee_error("invalid main function (expect 0-3 arguments)");
-//      }
-//    }
-//  }
-
-
+  Instruction *first = &*(f->begin()->begin());
   for (; ai != ae; ai++) {
-		Instruction *first = &*(f->begin()->begin());
-
-		MemoryObject *mo = createSymbolicArg(*state, ai->getType(), first);
-		if (mo != 0) {
-			arguments.push_back(mo->getBaseExpr());
-		}
-
+		ref<Expr> expr = createSymbolicArg(*state, ai->getType(), first);
+		arguments.push_back(expr);
 	}
-
-  std::cerr << "finsih 1" <<  "\n";
 
   if (pathWriter)
     state->pathOS = pathWriter->open();
@@ -3851,36 +3834,7 @@ void Executor::runFunctionAsMain(Function *f,
   for (unsigned i = 0, e = f->arg_size(); i != e; ++i)
     bindArgument(kf, i, *state, arguments[i]);
 
-  std::cerr << "finsih 2" <<  "\n";
-//  if (argvMO) {
-//    ObjectState *argvOS = bindObjectInState(*state, argvMO, false);
-//
-//    for (int i=0; i<argc+1+envc+1+1; i++) {
-//      if (i==argc || i>=argc+1+envc) {
-//        // Write NULL pointer
-//        argvOS->write(i * NumPtrBytes, Expr::createPointer(0));
-//      } else {
-//        char *s = i<argc ? argv[i] : envp[i-(argc+1)];
-//        int j, len = strlen(s);
-//
-//        MemoryObject *arg =
-//            memory->allocate(len + 1, /*isLocal=*/false, /*isGlobal=*/true,
-//                             /*allocSite=*/state->pc->inst, /*alignment=*/8);
-//        if (!arg)
-//          klee_error("Could not allocate memory for function arguments");
-//        ObjectState *os = bindObjectInState(*state, arg, false);
-//        for (j=0; j<len+1; j++)
-//          os->write8(j, s[j]);
-//
-//        // Write pointer to newly allocated and initialised argv/envp c-string
-//        argvOS->write(i * NumPtrBytes, arg->getBaseExpr());
-//      }
-//    }
-//  }
-  
   initializeGlobals(*state);
-
-  std::cerr << "finsih 3" <<  "\n";
 
   processTree = new PTree(state);
   state->ptreeNode = processTree->root;

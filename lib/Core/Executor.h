@@ -547,7 +547,7 @@ public:
                  ExecutionState &state,
                  ref<Expr> value);
 
-  MemoryObject* createSymbolicArg(ExecutionState &state, Type *ty,
+  ref<Expr> createSymbolicArg(ExecutionState &state, Type *ty,
 		  Instruction *first);
 
   int argNum;
