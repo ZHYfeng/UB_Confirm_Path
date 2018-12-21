@@ -8,7 +8,6 @@
 #ifndef LIB_ENCODE_SYMBOLIC_H_
 #define LIB_ENCODE_SYMBOLIC_H_
 
-#include <bits/stdint-uintn.h>
 #include <iostream>
 #include <map>
 #include <string>
