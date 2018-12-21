@@ -40,7 +40,6 @@ ref<Expr> Symbolic::manualMakeSymbolic(std::string name, unsigned int size) {
 	ref<Expr> offset = ConstantExpr::create(0, BIT_WIDTH);
 	ref<Expr> result = os->read(offset, size);
 #if DEBUGINFO
-	llvm::errs() << "event name : " << currentEvent->eventName << "\n";
 	llvm::errs() << "make symboic:" << name << "\n";
 	llvm::errs() << "result : ";
 	result->dump();
