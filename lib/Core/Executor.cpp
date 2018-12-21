@@ -3709,7 +3709,7 @@ ref<Expr> Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 
 	ref<Expr> expr;
 	unsigned int size = 0;
-#if DEBUG
+#if DEBUGINFO
 	ty->dump();
 	std::cerr << "getTypeID : ";
 	std::cerr << ty->getTypeID() << "\n";
@@ -3780,7 +3780,7 @@ ref<Expr> Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 
 	}
 	}
-#if DEBUG
+#if DEBUGINFO
 	std::cerr << "expr : ";
 	expr->dump();
 	std::cerr << "size : " << size << "\n";

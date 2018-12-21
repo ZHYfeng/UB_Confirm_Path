@@ -52,7 +52,7 @@ void Encode::addList() {
 	std::string err;
 	const auto json = json11::Json::parse(Json, err);
 
-#if DEBUG
+#if DEBUGINFO
 	std::cerr << "whitelist" << "\n";
 #endif
 
@@ -71,7 +71,7 @@ void Encode::addList() {
 			templist.erase(templist.begin(), templist.begin() + 1);
 			templist.erase(templist.end() - 1, templist.end());
 			whiteList.push_back(templist);
-#if DEBUG
+#if DEBUGINFO
 			std::cerr << templist << "\n";
 #endif
 			j = i + 2;
@@ -79,13 +79,13 @@ void Encode::addList() {
 			std::string templist = temp.substr(j, i - j);
 			templist.erase(templist.begin(), templist.begin() + 1);
 			whiteList.push_back(templist);
-#if DEBUG
+#if DEBUGINFO
 			std::cerr << templist << "\n";
 #endif
 		}
 	}
 
-#if DEBUG
+#if DEBUGINFO
 	std::cerr << "blacklist" << "\n";
 #endif
 
@@ -99,7 +99,7 @@ void Encode::addList() {
 			templist.erase(templist.begin(), templist.begin() + 1);
 			templist.erase(templist.end() - 1, templist.end());
 			blackList.push_back(templist);
-#if DEBUG
+#if DEBUGINFO
 			std::cerr << templist << "\n";
 #endif
 			j = i + 2;
@@ -107,7 +107,7 @@ void Encode::addList() {
 			std::string templist = temp.substr(j, i - j);
 			templist.erase(templist.begin(), templist.begin() + 1);
 			blackList.push_back(templist);
-#if DEBUG
+#if DEBUGINFO
 			std::cerr << templist << "\n";
 #endif
 		}
@@ -166,7 +166,7 @@ void Encode::addList() {
 		isWhiteList.push_back(0);
 	}
 	isWhiteList[0] = 1;
-#if DEBUG
+#if DEBUGINFO
 	std::cerr << "whiteList : " << whiteList.size() << "\n";
 #endif
 }
@@ -181,13 +181,13 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 	expr brIsTrue = z3_ctxx->bool_val(isTrue);
 	constraint = (brCond == brIsTrue);
 	constraintExpr.push_back(constraint);
-#if DEBUG
+#if DEBUGINFO
 	std::cerr << "addBr : " << constraint << "\n";
 #endif
 	expr brLabelTrue = z3_ctxx->int_const(labelTrue.str().c_str());
 	constraint = (brLabelTrue == true);
 	constraintExpr.push_back(constraint);
-#if DEBUG
+#if DEBUGINFO
 	std::cerr << "addBr : " << constraint << "\n";
 #endif
 
@@ -195,7 +195,7 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 //	constraint = (brLabelFalse == false);
 //	constraintExpr.push_back(constraint);
 
-#if DEBUG
+#if DEBUGINFO
 	std::cerr << "all : \n";
 	for (unsigned int i = 0; i < constraintExpr.size(); i++) {
 		std::cerr << constraintExpr[i] << "\n";
@@ -209,7 +209,7 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 
 void Encode::checkWhiteList(llvm::StringRef label) {
 	for (unsigned i = 0; i < whiteList.size(); i++) {
-#if DEBUG
+#if DEBUGINFO
 		llvm::errs() << "whiteList : " << whiteList[i] << "\n";
 #endif
 		if (whiteList[i] == label.str()) {
@@ -219,7 +219,7 @@ void Encode::checkWhiteList(llvm::StringRef label) {
 			}
 		}
 	}
-#if DEBUG
+#if DEBUGINFO
 	llvm::errs() << "label name : " << label << "\n";
 	llvm::errs() << "flag : " << flag << "\n";
 	std::cerr << "isWhiteList : " << isWhiteList.size() << "\n";
@@ -241,7 +241,7 @@ void Encode::checkUseList(llvm::StringRef label) {
 
 	if (flag == whiteList.size()) {
 		for (unsigned i = 0; i < useList.size(); i++) {
-#if DEBUG
+#if DEBUGINFO
 			llvm::errs() << "useList : " << useList[i] << "\n";
 #endif
 			if (useList[i] == label.str()) {

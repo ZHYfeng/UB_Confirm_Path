@@ -22,8 +22,6 @@
 #include "../Core/Executor.h"
 #include "../Core/Memory.h"
 
-#define DEBUG_RUNTIME 1
-
 namespace klee {
 
 Symbolic::Symbolic(Executor *executor) {
@@ -41,7 +39,7 @@ ref<Expr> Symbolic::manualMakeSymbolic(std::string name, unsigned int size) {
 	ObjectState *os = new ObjectState(size, array);
 	ref<Expr> offset = ConstantExpr::create(0, BIT_WIDTH);
 	ref<Expr> result = os->read(offset, size);
-#if DEBUGSYMBOLIC
+#if DEBUGINFO
 	llvm::errs() << "event name : " << currentEvent->eventName << "\n";
 	llvm::errs() << "make symboic:" << name << "\n";
 	llvm::errs() << "result : ";
@@ -71,7 +69,7 @@ std::string Symbolic::createGlobalVarFullName(std::string i, unsigned memoryId,
 	}
 	ss << signal;
 	ss << time;
-#if DEBUG_RUNTIME
+#if DEBUGINFO
 	llvm::errs() << "createGlobalVarFullName : " << ss.str() << "\n";
 #endif
 	return ss.str();
@@ -110,7 +108,7 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 	Type::TypeID id = ki->inst->getType()->getTypeID();
 	ref<Expr> address = executor->eval(ki, 0, state).value;
 	ObjectPair op;
-#if DEBUG_RUNTIME
+#if DEBUGINFO
 	ref<Expr> addressCurrent = executor->eval(ki, 0, state).value;
 	llvm::errs() << "address : " << address << " address Current : "
 			<< addressCurrent << "\n";
@@ -142,6 +140,17 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 				std::cerr << "i : " << li->getNumOperands() << "\n";
 				GlobalName = createGlobalVarFullName(ss.str(), mo->id, key,
 						isGlobal, loadTime, false);
+				if (id == Type::IntegerTyID) {
+					Expr::Width size = executor->getWidthForLLVMType(
+							ki->inst->getType());
+					ref<Expr> value = executor->getDestCell(state, ki).value;
+					ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+					std::cerr << " load symbolic value : ";
+					symbolic->dump();
+					executor->bindLocal(ki, state, symbolic);
+					state.encode.globalname.push_back(GlobalName);
+					state.encode.globalexpr.push_back(symbolic);
+				}
 			}
 		} else {
 			llvm::errs() << "Load address = " << realAddress->getZExtValue()
@@ -150,19 +159,6 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 		}
 	} else {
 		assert(0 && " address is not const");
-	}
-	if (isGlobal) {
-		if (id == Type::IntegerTyID) {
-			Expr::Width size = executor->getWidthForLLVMType(
-					ki->inst->getType());
-			ref<Expr> value = executor->getDestCell(state, ki).value;
-			ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
-			std::cerr << " load symbolic value : ";
-			symbolic->dump();
-			executor->bindLocal(ki, state, symbolic);
-			state.encode.globalname.push_back(GlobalName);
-			state.encode.globalexpr.push_back(symbolic);
-		}
 	}
 }
 
