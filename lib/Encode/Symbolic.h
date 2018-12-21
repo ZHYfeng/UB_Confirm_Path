@@ -43,7 +43,7 @@ private:
 	ref<Expr> readExpr(ExecutionState &state, ref<Expr> address, Expr::Width size);
 	unsigned getLoadTime(uint64_t address);
 	unsigned getStoreTime(uint64_t address);
-	std::string createGlobalVarFullName(unsigned memoryId, uint64_t address, bool isGlobal, unsigned time, bool isStore);
+	std::string createGlobalVarFullName(std::string i, unsigned memoryId, uint64_t address, bool isGlobal, unsigned time, bool isStore);
 
 };
 

@@ -38,7 +38,7 @@ Encode::Encode() :
 
 Encode::Encode(const Encode &e) :
 		z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), constraintExpr(
-				e.constraintExpr), path(e.path), flag(e.flag), Json(e.Json), whiteList(
+				e.constraintExpr), path(e.path), globalname(e.globalname), globalexpr(e.globalexpr), flag(e.flag), Json(e.Json), whiteList(
 				e.whiteList), blackList(e.blackList), useList(e.useList), isWhiteList(
 				e.isWhiteList) {
 }
@@ -264,7 +264,15 @@ void Encode::checkUseList(llvm::StringRef label) {
 						ss << path[i];
 					}
 					json["path"] = ss.str();
-					std::cerr << json.dump();
+
+					for (unsigned int i = 0; i < globalexpr.size(); i++) {
+						ss.str("");
+						ss << m.eval(kq.getZ3Expr(globalexpr.at(i)));
+						json["symbolic"][globalname.at(i)] = ss.str();
+					}
+					std::ofstream out_file("confirm_result.txt", std::ios_base::out | std::ios_base::app);
+					out_file << json.dump() << "\n";
+					out_file.close();
 				} else if (result == z3::unknown) {
 
 				} else if (result == z3::unsat) {

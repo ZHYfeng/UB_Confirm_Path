@@ -35,6 +35,8 @@ public:
 	KQuery2Z3 kq;
 	std::vector<expr> constraintExpr;
 	std::vector<bool> path;
+	std::vector<std::string> globalname;
+	std::vector<ref<Expr>> globalexpr;
 	unsigned int flag;
 	std::string Json;
 	std::vector<std::string> whiteList;

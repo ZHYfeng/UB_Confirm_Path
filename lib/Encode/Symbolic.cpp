@@ -50,10 +50,11 @@ ref<Expr> Symbolic::manualMakeSymbolic(std::string name, unsigned int size) {
 	return result;
 }
 
-std::string Symbolic::createGlobalVarFullName(unsigned memoryId,
+std::string Symbolic::createGlobalVarFullName(std::string i, unsigned memoryId,
 		uint64_t address, bool isGlobal, unsigned time, bool isStore) {
 	char signal;
 	ss.str("");
+	ss << i;
 	if (isGlobal) {
 		signal = 'G';
 	} else {
@@ -127,11 +128,20 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 			isGlobal = executor->isGlobalMO(mo);
 			if (isGlobal) {
 				unsigned loadTime = getLoadTime(key);
-				LoadInst *li = cast<LoadInst>(ki->inst);
-				std::cerr << "i : " << li->getOpcodeName() << "\n";
-				std::cerr << "i : " << li->getOpcodeName() << "\n";
-				GlobalName = createGlobalVarFullName(mo->id, key, isGlobal,
-						loadTime, false);
+
+				std::string ld;
+				llvm::raw_string_ostream rso(ld);
+				ki->inst->print(rso);
+				std::stringstream ss;
+				unsigned int j = rso.str().find("=");
+				for (unsigned int i = 2; i < j; i++) {
+					ss << rso.str().at(i);
+				}
+
+				llvm::LoadInst *li = llvm::cast<llvm::LoadInst>(ki->inst);
+				std::cerr << "i : " << li->getNumOperands() << "\n";
+				GlobalName = createGlobalVarFullName(ss.str(), mo->id, key,
+						isGlobal, loadTime, false);
 			}
 		} else {
 			llvm::errs() << "Load address = " << realAddress->getZExtValue()
@@ -150,6 +160,8 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 			std::cerr << " load symbolic value : ";
 			symbolic->dump();
 			executor->bindLocal(ki, state, symbolic);
+			state.encode.globalname.push_back(GlobalName);
+			state.encode.globalexpr.push_back(symbolic);
 		}
 	}
 }

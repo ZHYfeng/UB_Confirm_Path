@@ -3740,6 +3740,7 @@ ref<Expr> Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 			std::stringstream ss;
 			ss << "arg_" << argNum;
 			std::string name = ss.str();
+
 			argNum++;
 			if (ty->isSized()) {
 				size = kmodule->targetData->getTypeStoreSize(ty);
@@ -3751,6 +3752,8 @@ ref<Expr> Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 			executeMakeSymbolic(state, mo, name);
 			const ObjectState *os = state.addressSpace.findObject(mo);
 			expr = os->read(0, it->getBitWidth());
+			state.encode.globalname.push_back(name);
+			state.encode.globalexpr.push_back(expr);
 
 		}
 		break;
