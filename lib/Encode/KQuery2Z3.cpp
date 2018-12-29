@@ -14,6 +14,7 @@
 #include <iostream>
 #include <iterator>
 #include <sstream>
+#define INT_ARITHMETIC 0
 
 
 using namespace klee;
@@ -94,7 +95,7 @@ void KQuery2Z3::getZ3Expr() {
 
 z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 	z3::expr res = z3_ctx.bool_val(true);
-
+	ele->dump();
 	switch (ele->getKind()) {
 
 	case Expr::Constant: {
@@ -137,7 +138,9 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 		const std::string varName = re->updates.root->name;
 		if (re->getWidth() == Expr::Bool) {
 			res = z3_ctx.bool_const(varName.c_str());
-		} else {
+		} else if(re->getWidth() == Expr::Int8) {
+			res = z3_ctx.bool_const(varName.c_str());
+		}else {
 #if INT_ARITHMETIC
 				res = z3_ctx.constant(varName.c_str(), z3_ctx.int_sort());
 #else
@@ -145,6 +148,7 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 #endif
 
 		}
+		ele->dump();
 		return res;
 	}
 
@@ -195,13 +199,15 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 			res = z3::ite(src, z3_ctx.int_val(1), z3_ctx.int_val(0));
 #else
 			res = z3::ite(
-					z3::to_expr(z3_ctx, Z3_mk_extract(z3_ctx, 0, 0, src)),
+//					z3::to_expr(z3_ctx, Z3_mk_extract(z3_ctx, 0, 0, src)),
+					src,
 					z3_ctx.bv_val(1, BIT_WIDTH), z3_ctx.bv_val(0, BIT_WIDTH));
 #endif
 
 		} else {
 			res = src;
 		}
+		ele->dump();
 		return res;
 	}
 
@@ -478,10 +484,10 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 
 		case Expr::Eq: {
 			EqExpr *ee = cast<EqExpr>(ele);
-//			std::cerr << "ele = " << ele << std::endl;
 			z3::expr left = eachExprToZ3(ee->left);
-//			std::cerr << "left = " << left << std::endl;
+			std::cerr << "left = " << left << std::endl;
 			z3::expr right = eachExprToZ3(ee->right);
+			std::cerr << "right = " << right << std::endl;
 //			assert(
 //					Z3_get_sort_kind(z3_ctx, left)
 //							&& "sort between left and right are different in Expr::Eq\n");

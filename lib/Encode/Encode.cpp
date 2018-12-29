@@ -177,16 +177,21 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 	path.push_back(isTrue);
 
 	expr constraint = z3_ctxx->bool_val(1);
+	std::cerr << "addBr 1" << "\n";
 	expr brCond = kq.getZ3Expr(cond);
+	std::cerr << "addBr 2" << "\n";
 	expr brIsTrue = z3_ctxx->bool_val(isTrue);
 	constraint = (brCond == brIsTrue);
 	constraintExpr.push_back(constraint);
 #if DEBUGINFO
 	std::cerr << "addBr : " << constraint << "\n";
 #endif
+    llvm::errs() << labelTrue << "\n";
 	expr brLabelTrue = z3_ctxx->int_const(labelTrue.str().c_str());
+    std::cerr << "addBr 3" << "\n";
 	constraint = (brLabelTrue == true);
 	constraintExpr.push_back(constraint);
+    std::cerr << "addBr 4" << "\n";
 #if DEBUGINFO
 	std::cerr << "addBr : " << constraint << "\n";
 #endif

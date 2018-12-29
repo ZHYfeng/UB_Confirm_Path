@@ -112,6 +112,7 @@ ObjectState::ObjectState(const MemoryObject *mo)
     updates = UpdateList(array, 0);
   }
   memset(concreteStore, 0, size);
+  initialize = true;
 }
 
 
@@ -129,6 +130,7 @@ ObjectState::ObjectState(const MemoryObject *mo, const Array *array)
   mo->refCount++;
   makeSymbolic();
   memset(concreteStore, 0, size);
+  initialize = true;
 }
 
 ObjectState::ObjectState(unsigned size, const Array *array)
@@ -144,6 +146,7 @@ ObjectState::ObjectState(unsigned size, const Array *array)
     readOnly(false) {
   makeSymbolic();
   memset(concreteStore, 0, size);
+  initialize = true;
 }
 
 ObjectState::ObjectState(const ObjectState &os) 
@@ -168,6 +171,7 @@ ObjectState::ObjectState(const ObjectState &os)
   }
 
   memcpy(concreteStore, os.concreteStore, size*sizeof(*concreteStore));
+  initialize = os.initialize;
 }
 
 ObjectState::~ObjectState() {

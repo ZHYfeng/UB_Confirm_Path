@@ -1604,8 +1604,8 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), *branches.first);
       if (branches.second)
         transferToBasicBlock(bi->getSuccessor(1), bi->getParent(), *branches.second);
-
-
+        llvm::errs() << "br 1" << "\n";
+        bi->getSuccessor(0)->dump();
       if (cond->getKind() != Expr::Constant) {
           if (branches.first){
         	  branches.first->encode.addBrConstraint(cond, true, bi->getSuccessor(0)->getName(), bi->getSuccessor(1)->getName());
@@ -1614,6 +1614,9 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         	  branches.second->encode.addBrConstraint(cond, false, bi->getSuccessor(1)->getName(), bi->getSuccessor(0)->getName());
           }
       }
+
+        llvm::errs() << "br 2" << "\n";
+
       int result;
       if (branches.first){
     	  result = branches.first->encode.checkList(bi->getSuccessor(0)->getName());
@@ -2193,10 +2196,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   case Instruction::Load: {
     ref<Expr> base = eval(ki, 0, state).value;
     executeMemoryOperation(state, false, base, 0, ki);
-    ref<Expr> value = getDestCell(state, ki).value;
-    std::cerr << "load value :";
-    value->dump();
-    symbolic.load(state, ki);
+
     break;
   }
   case Instruction::Store: {
@@ -3562,12 +3562,88 @@ void Executor::executeMemoryOperation(ExecutionState &state,
           wos->write(offset, value);
         }          
       } else {
+          if(os->initialize == false){
+              std::cerr << "os->initialize == false" << "\n";
+              unsigned int size = 0;
+              ref<Expr> expr;
+              Type *ty = target->inst->getType();
+              switch (ty->getTypeID()) {
+                  case llvm::Type::PointerTyID: {
+                      if (PointerType *pt = dyn_cast<PointerType>(ty)) {
+                          Type *kind = pt->getElementType();
+                          if (kind->isSized()) {
+                              size = kmodule->targetData->getTypeStoreSize(kind);
+                          }
+                          MemoryObject *lmo = memory->allocate(size,
+                                  /*isLocal=*/false, /*isGlobal=*/true,
+                                  /*allocSite=*/target->inst, /*alignment=*/8);
+                          bindObjectInState(state, lmo, false);
+                          expr = lmo->getBaseExpr();
+                          ObjectState *los = bindObjectInState(state, lmo, false);
+                          los->initialize = false;
+//			ref<Expr> kexpr = createSymbolicArg(state, kind, first);
+                          ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+                          wos->write(offset, expr);
+                      }
+                      break;
+                  }
+                  case llvm::Type::IntegerTyID: {
+                      if (IntegerType *it = dyn_cast<IntegerType>(ty)) {
+
+                          std::stringstream ss;
+                          ss << "input_" << argNum;
+                          std::string name = ss.str();
+
+                          argNum++;
+                          if (ty->isSized()) {
+                              size = kmodule->targetData->getTypeStoreSize(ty);
+                          }
+                          MemoryObject *lmo = memory->allocate(size,
+                                  /*isLocal=*/false, /*isGlobal=*/false,
+                                  /*allocSite=*/target->inst, /*alignment=*/8);
+
+                          executeMakeSymbolic(state, lmo, name);
+                          const ObjectState *los = state.addressSpace.findObject(lmo);
+                          expr = los->read(0, it->getBitWidth());
+                          state.encode.globalname.push_back(name);
+                          state.encode.globalexpr.push_back(expr);
+
+                      }
+                      break;
+                  }
+                  case llvm::Type::StructTyID: {
+                      if (StructType *st = dyn_cast<StructType>(ty)) {
+                          if (ty->isSized()) {
+                              size = kmodule->targetData->getTypeStoreSize(ty);
+                          }
+                          MemoryObject *lmo = memory->allocate(size,
+                                  /*isLocal=*/false, /*isGlobal=*/true,
+                                  /*allocSite=*/target->inst, /*alignment=*/8);
+                          for(Type::subtype_iterator ae = st->element_begin(); ae != st->element_end(); ){
+                              ae++;
+//				MemoryObject *mo = createSymbolicArg(state, *ae, first);
+                          }
+                          expr = lmo->getBaseExpr();
+                          assert("StructTyID" && 0);
+
+                      }
+                      break;
+                  }
+                  default: {
+
+                  }
+              }
+          }
         ref<Expr> result = os->read(offset, type);
         
         if (interpreterOpts.MakeConcreteSymbolic)
           result = replaceReadWithSymbolic(state, result);
         
         bindLocal(target, state, result);
+          ref<Expr> value = getDestCell(state, target).value;
+          std::cerr << "load value :";
+          value->dump();
+          symbolic.load(state, target);
       }
 
       return;
@@ -3727,7 +3803,8 @@ ref<Expr> Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 			/*allocSite=*/first, /*alignment=*/8);
 			bindObjectInState(state, mo, false);
 			expr = mo->getBaseExpr();
-//			ObjectState *os = bindObjectInState(state, mo, false);
+			ObjectState *os = bindObjectInState(state, mo, false);
+			os->initialize = false;
 //			ref<Expr> kexpr = createSymbolicArg(state, kind, first);
 //			os->write(NumPtrBytes, kexpr);
 
