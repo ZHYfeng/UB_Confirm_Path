@@ -1076,7 +1076,7 @@ int main(int argc, char **argv, char **envp) {
 	const auto json = json11::Json::parse(Json, err);
 //
 	std::string temp = "./" + json["bc"].dump();
-	temp.erase(temp.begin()+2,temp.begin()+3);
+	temp.erase(temp.begin(),temp.begin()+3);
 	temp.erase(temp.end()-1,temp.end());
 	InputFile = temp;
 
