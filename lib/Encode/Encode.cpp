@@ -38,7 +38,8 @@ Encode::Encode() :
 
 Encode::Encode(const Encode &e) :
 		z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), constraintExpr(
-				e.constraintExpr), path(e.path), globalname(e.globalname), globalexpr(e.globalexpr), flag(e.flag), Json(e.Json), whiteList(
+				e.constraintExpr), path(e.path), globalname(e.globalname), globalexpr(
+				e.globalexpr), flag(e.flag), Json(e.Json), whiteList(
 				e.whiteList), blackList(e.blackList), useList(e.useList), isWhiteList(
 				e.isWhiteList) {
 }
@@ -177,21 +178,18 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 	path.push_back(isTrue);
 
 	expr constraint = z3_ctxx->bool_val(1);
-	std::cerr << "addBr 1" << "\n";
 	expr brCond = kq.getZ3Expr(cond);
-	std::cerr << "addBr 2" << "\n";
 	expr brIsTrue = z3_ctxx->bool_val(isTrue);
 	constraint = (brCond == brIsTrue);
 	constraintExpr.push_back(constraint);
 #if DEBUGINFO
 	std::cerr << "addBr : " << constraint << "\n";
+	llvm::errs() << labelTrue << "\n";
 #endif
-    llvm::errs() << labelTrue << "\n";
+
 	expr brLabelTrue = z3_ctxx->int_const(labelTrue.str().c_str());
-    std::cerr << "addBr 3" << "\n";
 	constraint = (brLabelTrue == true);
 	constraintExpr.push_back(constraint);
-    std::cerr << "addBr 4" << "\n";
 #if DEBUGINFO
 	std::cerr << "addBr : " << constraint << "\n";
 #endif
@@ -210,6 +208,7 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 		std::cerr << path[i] << "\n";
 	}
 #endif
+
 }
 
 void Encode::checkWhiteList(llvm::StringRef label) {
@@ -256,11 +255,12 @@ void Encode::checkUseList(llvm::StringRef label) {
 				check_result result = z3_solverr.check();
 				if (result == z3::sat) {
 					flag = 0;
-					std::cerr << "Yes!\n";
 					model m = z3_solverr.get_model();
+#if DEBUGINFO
+					std::cerr << "Yes!\n";
 					std::cerr << "\nz3_solver.get_model()\n";
 					std::cerr << "\n" << m << "\n";
-
+#endif
 					auto json = nlohmann::json::parse(Json);
 					json["find"] = "Yes";
 					std::stringstream ss;
@@ -275,7 +275,8 @@ void Encode::checkUseList(llvm::StringRef label) {
 						ss << m.eval(kq.getZ3Expr(globalexpr.at(i)));
 						json["symbolic"][globalname.at(i)] = ss.str();
 					}
-					std::ofstream out_file("confirm_result.txt", std::ios_base::out | std::ios_base::app);
+					std::ofstream out_file("confirm_result.txt",
+							std::ios_base::out | std::ios_base::app);
 					out_file << json.dump() << "\n";
 					out_file.close();
 				} else if (result == z3::unknown) {
@@ -285,6 +286,17 @@ void Encode::checkUseList(llvm::StringRef label) {
 				}
 			}
 		}
+	}
+}
+
+void Encode::checkBBCount(llvm::StringRef label) {
+	if (BBCount.find(label.str()) != BBCount.end()) {
+		BBCount[label.str()]++;
+		if (BBCount[label.str()] == 3) {
+			flag = -1;
+		}
+	} else {
+		BBCount[label.str()] = 1;
 	}
 }
 

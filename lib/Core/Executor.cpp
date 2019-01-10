@@ -1512,7 +1512,9 @@ static inline const llvm::fltSemantics * fpWidthToSemantics(unsigned width) {
 
 void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   Instruction *i = ki->inst;
+#if DEBUGINFO
   i->dump();
+#endif
 
   switch (i->getOpcode()) {
     // Control flow
@@ -1600,12 +1602,13 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
       if (statsTracker && state.stack.back().kf->trackCoverage)
         statsTracker->markBranchVisited(branches.first, branches.second);
 
-      if (branches.first)
+      if (branches.first) {
         transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), *branches.first);
-      if (branches.second)
+      }
+      if (branches.second) {
         transferToBasicBlock(bi->getSuccessor(1), bi->getParent(), *branches.second);
-        llvm::errs() << "br 1" << "\n";
-        bi->getSuccessor(0)->dump();
+      }
+      int result;
       if (cond->getKind() != Expr::Constant) {
           if (branches.first){
         	  branches.first->encode.addBrConstraint(cond, true, bi->getSuccessor(0)->getName(), bi->getSuccessor(1)->getName());
@@ -1615,9 +1618,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
           }
       }
 
-        llvm::errs() << "br 2" << "\n";
 
-      int result;
       if (branches.first){
     	  result = branches.first->encode.checkList(bi->getSuccessor(0)->getName());
     	  if(result == -1){
@@ -1635,7 +1636,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     	  }
       }
 
-#ifdef DEBUG
+#if DEBUGINFO
       llvm::errs() << "first = " << branches.first << "\n";
       llvm::errs() << "second = " << branches.second << "\n";
       llvm::errs() << "br cond = ";
@@ -2202,8 +2203,10 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   case Instruction::Store: {
     ref<Expr> base = eval(ki, 1, state).value;
     ref<Expr> value = eval(ki, 0, state).value;
+#if DEBUGINFO
     std::cerr << "store value :";
     value->dump();
+#endif
     executeMemoryOperation(state, true, base, value, 0);
     break;
   }
@@ -3563,7 +3566,9 @@ void Executor::executeMemoryOperation(ExecutionState &state,
         }          
       } else {
           if(os->initialize == false){
+#if DEBUGINFO
               std::cerr << "os->initialize == false" << "\n";
+#endif
               unsigned int size = 0;
               ref<Expr> expr;
               Type *ty = target->inst->getType();
@@ -3591,7 +3596,6 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                       if (IntegerType *it = dyn_cast<IntegerType>(ty)) {
 
                           std::stringstream ss;
-                          ss << "input_" << argNum;
                           std::string name = ss.str();
 
                           argNum++;
@@ -3640,9 +3644,11 @@ void Executor::executeMemoryOperation(ExecutionState &state,
           result = replaceReadWithSymbolic(state, result);
         
         bindLocal(target, state, result);
+#if DEBUGINFO
           ref<Expr> value = getDestCell(state, target).value;
           std::cerr << "load value :";
           value->dump();
+#endif
           symbolic.load(state, target);
       }
 

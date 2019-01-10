@@ -125,7 +125,6 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 			isGlobal = executor->isGlobalMO(mo);
 			if (isGlobal) {
 				unsigned loadTime = getLoadTime(key);
-
 				std::string ld;
 				llvm::raw_string_ostream rso(ld);
 				ki->inst->print(rso);
@@ -135,8 +134,6 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 					ss << rso.str().at(i);
 				}
 
-				llvm::LoadInst *li = llvm::cast<llvm::LoadInst>(ki->inst);
-				std::cerr << "i : " << li->getNumOperands() << "\n";
 				GlobalName = createGlobalVarFullName(ss.str(), mo->id, key,
 						isGlobal, loadTime, false);
 				if (id == Type::IntegerTyID) {
@@ -144,8 +141,10 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 							ki->inst->getType());
 					ref<Expr> value = executor->getDestCell(state, ki).value;
 					ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+#if DUBUGINFO
 					std::cerr << " load symbolic value : ";
 					symbolic->dump();
+#endif
 					executor->bindLocal(ki, state, symbolic);
 					state.encode.globalname.push_back(GlobalName);
 					state.encode.globalexpr.push_back(symbolic);

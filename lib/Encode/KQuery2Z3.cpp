@@ -95,7 +95,9 @@ void KQuery2Z3::getZ3Expr() {
 
 z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 	z3::expr res = z3_ctx.bool_val(true);
+#if DEBUGINFO
 	ele->dump();
+#endif
 	switch (ele->getKind()) {
 
 	case Expr::Constant: {
@@ -485,9 +487,7 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 		case Expr::Eq: {
 			EqExpr *ee = cast<EqExpr>(ele);
 			z3::expr left = eachExprToZ3(ee->left);
-			std::cerr << "left = " << left << std::endl;
 			z3::expr right = eachExprToZ3(ee->right);
-			std::cerr << "right = " << right << std::endl;
 //			assert(
 //					Z3_get_sort_kind(z3_ctx, left)
 //							&& "sort between left and right are different in Expr::Eq\n");

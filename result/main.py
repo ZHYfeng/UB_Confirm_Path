@@ -8,7 +8,7 @@ def main():
 	line = file.readline()
 	while line:
 		line = line.replace("\n","")
-		cmd = "klee -json=\'"+line+"\' 2>&1 1>result.txt"
+		cmd = "time klee -json=\'"+line+"\' 2>&1 | tee >> confirm_result.log"
 		
 		os.system(cmd)
 		# print(cmd)

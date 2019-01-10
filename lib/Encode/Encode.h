@@ -10,6 +10,7 @@
 
 #include <llvm/ADT/StringRef.h>
 #include <z3++.h>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -42,6 +43,7 @@ public:
 	std::vector<std::string> whiteList;
 	std::vector<std::string> blackList;
 	std::vector<std::string> useList;
+	std::map<std::string, int> BBCount;
 	std::vector<int> isWhiteList;
 
 public:
@@ -51,6 +53,7 @@ public:
 	void checkWhiteList(llvm::StringRef label);
 	void checkBlackList(llvm::StringRef label);
 	void checkUseList(llvm::StringRef label);
+	void checkBBCount(llvm::StringRef label);
 	int checkList(llvm::StringRef label);
 };
 

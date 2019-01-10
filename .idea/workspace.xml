@@ -28,10 +28,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a4bf26a7-50f6-4b04-9fdd-f4853644789c" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/result/Usage.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/result/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/result/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/result/main_remote.py" beforeDir="false" afterPath="$PROJECT_DIR$/result/main_remote.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/build/" />
@@ -87,7 +84,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/result/main_remote.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="150">
+            <state relative-caret-position="135">
               <caret line="10" column="84" selection-start-line="10" selection-start-column="84" selection-end-line="10" selection-end-column="84" />
               <folding>
                 <element signature="e#18#28#0" expanded="true" />
@@ -101,7 +98,7 @@
           <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
             <state split_layout="SPLIT">
               <first_editor relative-caret-position="30">
-                <caret line="2" column="3" lean-forward="true" selection-start-line="2" selection-start-column="3" selection-end-line="2" selection-end-column="3" />
+                <caret line="2" column="3" selection-start-line="2" selection-start-column="3" selection-end-line="2" selection-end-column="3" />
               </first_editor>
               <second_editor />
             </state>
@@ -123,7 +120,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/lib/Core/Executor.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="248">
+            <state relative-caret-position="22740">
               <caret line="1516" column="27" selection-start-line="1516" selection-start-column="27" selection-end-line="1516" selection-end-column="27" />
               <folding>
                 <element signature="e#2466#2484#0" expanded="true" />
@@ -200,14 +197,15 @@
   <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="279" />
     <option name="y" value="54" />
-    <option name="width" value="1390" />
-    <option name="height" value="998" />
+    <option name="width" value="1400" />
+    <option name="height" value="1000" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -252,7 +250,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -409,7 +406,10 @@
       <workItem from="1546278198488" duration="599000" />
       <workItem from="1546305731868" duration="3000" />
       <workItem from="1546547392822" duration="2514000" />
-      <workItem from="1546554074271" duration="725000" />
+      <workItem from="1546554074271" duration="1691000" />
+      <workItem from="1546630169373" duration="2000" />
+      <workItem from="1546892667216" duration="701000" />
+      <workItem from="1546893594518" duration="332000" />
     </task>
     <task id="LOCAL-00001" summary="..">
       <created>1545431595537</created>
@@ -467,11 +467,18 @@
       <option name="project" value="LOCAL" />
       <updated>1546548714183</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="add usage">
+      <created>1546555206386</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1546555206386</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="19621000" />
+    <option name="totallyTimeSpent" value="21622000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -484,9 +491,8 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="43" y="27" width="1877" height="1053" extended-state="6" />
-    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.4064516" visible="true" weight="0.1409066" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.4064516" visible="true" weight="0.14582196" />
       <window_info id="Favorites" order="1" sideWeight="0.5016129" side_tool="true" weight="0.15674494" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Run" order="1" />
@@ -521,7 +527,8 @@
     <MESSAGE value="debug" />
     <MESSAGE value="change path" />
     <MESSAGE value="change result.txt" />
-    <option name="LAST_COMMIT_MESSAGE" value="change result.txt" />
+    <MESSAGE value="add usage" />
+    <option name="LAST_COMMIT_MESSAGE" value="add usage" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/lib/Encode/Symbolic.h">
@@ -679,12 +686,32 @@
     <entry file="file://$PROJECT_DIR$/lib/Core/Executor.h">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
+    <entry file="file://$PROJECT_DIR$/result/main_remote.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="10" column="84" selection-start-line="10" selection-start-column="84" selection-end-line="10" selection-end-column="84" />
+          <folding>
+            <element signature="e#18#28#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/lib/Encode/KQuery2Z3.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3045">
           <caret line="203" column="8" selection-start-line="203" selection-start-column="8" selection-end-line="203" selection-end-column="8" />
           <folding>
             <element signature="e#155#177#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/Core/Executor.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="22740">
+          <caret line="1516" column="27" selection-start-line="1516" selection-start-column="27" selection-end-line="1516" selection-end-column="27" />
+          <folding>
+            <element signature="e#2466#2484#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -710,31 +737,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lib/Core/Executor.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="248">
-          <caret line="1516" column="27" selection-start-line="1516" selection-start-column="27" selection-end-line="1516" selection-end-column="27" />
-          <folding>
-            <element signature="e#2466#2484#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/result/main_remote.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="84" selection-start-line="10" selection-start-column="84" selection-end-line="10" selection-end-column="84" />
-          <folding>
-            <element signature="e#18#28#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/result/Usage.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="SPLIT">
           <first_editor relative-caret-position="30">
-            <caret line="2" column="3" lean-forward="true" selection-start-line="2" selection-start-column="3" selection-end-line="2" selection-end-column="3" />
+            <caret line="2" column="3" selection-start-line="2" selection-start-column="3" selection-end-line="2" selection-end-column="3" />
           </first_editor>
           <second_editor />
         </state>

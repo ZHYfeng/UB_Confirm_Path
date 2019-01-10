@@ -1088,6 +1088,7 @@ int main(int argc, char **argv, char **envp) {
 
 	std::cerr << "function : " << EntryPoint << "\n";
 
+	std::cerr << "json : " << json.dump() << "\n";
 
   if (Watchdog) {
     if (MaxTime.empty()) {
