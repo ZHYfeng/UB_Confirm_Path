@@ -1868,7 +1868,8 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
       break;
 
     if (isa<InlineAsm>(fp)) {
-      terminateStateOnExecError(state, "inline assembly is unsupported");
+    	klee_message("symbolic: (location information missing) %s", "inline assembly is unsupported");
+    	symbolic.callReturnValue(state, ki, f);
       break;
     }
     // evaluate arguments
@@ -1950,7 +1951,9 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
             executeCall(*res.first, ki, f, arguments);
           } else {
             if (!hasInvalid) {
-              terminateStateOnExecError(state, "invalid function pointer");
+//              terminateStateOnExecError(state, "invalid function pointer");
+          	  klee_message("symbolic: (location information missing) %s", "invalid function pointer");
+          	  symbolic.callReturnValue(state, ki, f);
               hasInvalid = true;
             }
           }
@@ -3209,9 +3212,11 @@ void Executor::callExternalFunction(ExecutionState &state,
         ce->toMemory(&args[wordIndex]);
         wordIndex += (ce->getWidth()+63)/64;
       } else {
-        terminateStateOnExecError(state, 
-                                  "external call with symbolic argument: " + 
-                                  function->getName());
+//        terminateStateOnExecError(state,
+//                                  "external call with symbolic argument: " +
+//                                  function->getName());
+  	  klee_message("symbolic: (location information missing) %s", "external call with symbolic argument: " + function->getName());
+  	  symbolic.call(state, target, function, arguments);
         return;
       }
     }
@@ -3260,8 +3265,11 @@ void Executor::callExternalFunction(ExecutionState &state,
 
   bool success = externalDispatcher->executeCall(function, target->inst, args);
   if (!success) {
-    terminateStateOnError(state, "failed external call: " + function->getName(),
-                          External);
+//    terminateStateOnError(state, "failed external call: " + function->getName(),
+//                          External);
+	  klee_message("symbolic: (location information missing) %s", "failed external call" + function->getName());
+	  symbolic.call(state, target, function, arguments);
+
     return;
   }
 

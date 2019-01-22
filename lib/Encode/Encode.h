@@ -18,7 +18,7 @@
 #include "../../include/klee/util/Ref.h"
 #include "KQuery2Z3.h"
 
-#define DEBUGINFO 0
+#define DEBUGINFO 1
 
 using namespace z3;
 

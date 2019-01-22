@@ -160,4 +160,43 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 	}
 }
 
+void Symbolic::call(ExecutionState &state, KInstruction *ki, Function *function,
+		std::vector<ref<Expr> > &arguments) {
+	Type *resultType = ki->inst->getType();
+	if (resultType != Type::getVoidTy(function->getContext())) {
+		Expr::Width size = executor->getWidthForLLVMType(ki->inst->getType());
+		std::string ld;
+		llvm::raw_string_ostream rso(ld);
+		ki->inst->print(rso);
+		std::stringstream ss;
+		unsigned int j = rso.str().find("=");
+		for (unsigned int i = 2; i < j; i++) {
+			ss << rso.str().at(i);
+		}
+
+		std::string GlobalName = ss.str() + "call return";
+		ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+		executor->bindLocal(ki, state, symbolic);
+	}
+}
+
+void Symbolic::callReturnValue(ExecutionState &state, KInstruction *ki, Function *function) {
+	Type *resultType = ki->inst->getType();
+	if (!resultType->isVoidTy()) {
+		Expr::Width size = executor->getWidthForLLVMType(ki->inst->getType());
+		std::string ld;
+		llvm::raw_string_ostream rso(ld);
+		ki->inst->print(rso);
+		std::stringstream ss;
+		unsigned int j = rso.str().find("=");
+		for (unsigned int i = 2; i < j; i++) {
+			ss << rso.str().at(i);
+		}
+
+		std::string GlobalName = ss.str() + "call return";
+		ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+		executor->bindLocal(ki, state, symbolic);
+	}
+}
+
 } /* namespace klee */
