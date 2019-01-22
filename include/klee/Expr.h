@@ -24,6 +24,8 @@
 #include <vector>
 #include <map>
 
+#define DEBUGINFO 0
+
 namespace llvm {
   class Type;
   class raw_ostream;

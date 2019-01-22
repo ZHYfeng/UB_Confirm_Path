@@ -40,8 +40,8 @@ Encode::Encode(const Encode &e) :
 		z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), constraintExpr(
 				e.constraintExpr), path(e.path), globalname(e.globalname), globalexpr(
 				e.globalexpr), flag(e.flag), Json(e.Json), whiteList(
-				e.whiteList), blackList(e.blackList), useList(e.useList), isWhiteList(
-				e.isWhiteList) {
+				e.whiteList), blackList(e.blackList), useList(e.useList), BBName(e.BBName), BBCount(
+				e.BBCount), isWhiteList(e.isWhiteList) {
 }
 
 Encode::~Encode() {
@@ -180,9 +180,15 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 	expr constraint = z3_ctxx->bool_val(1);
 	expr brCond = kq.getZ3Expr(cond);
 	expr brIsTrue = z3_ctxx->bool_val(isTrue);
-	constraint = (brCond == brIsTrue);
+
+	if(brCond.is_bool()){
+		constraint = (brCond == brIsTrue);
+	}else {
+		constraint = ((brCond >= 0) == brIsTrue);
+	}
 	constraintExpr.push_back(constraint);
 #if DEBUGINFO
+	std::cerr << "brCond : " << brCond << "\n";
 	std::cerr << "addBr : " << constraint << "\n";
 	llvm::errs() << labelTrue << "\n";
 #endif
@@ -250,13 +256,16 @@ void Encode::checkUseList(llvm::StringRef label) {
 #endif
 			if (useList[i] == label.str()) {
 				for (unsigned int i = 0; i < constraintExpr.size(); i++) {
+#if DEBUGINFO
+					std::cerr << constraintExpr[i] << "\n";
+#endif
 					z3_solverr.add(constraintExpr[i]);
 				}
 				check_result result = z3_solverr.check();
 				if (result == z3::sat) {
 					flag = 0;
 					model m = z3_solverr.get_model();
-#if DEBUGINFO
+#if !DEBUGINFO
 					std::cerr << "Yes!\n";
 					std::cerr << "\nz3_solver.get_model()\n";
 					std::cerr << "\n" << m << "\n";
@@ -290,20 +299,48 @@ void Encode::checkUseList(llvm::StringRef label) {
 }
 
 void Encode::checkBBCount(llvm::StringRef label) {
-	if (BBCount.find(label.str()) != BBCount.end()) {
-		BBCount[label.str()]++;
-		if (BBCount[label.str()] == 3) {
-			flag = -1;
-		}
-	} else {
-		BBCount[label.str()] = 1;
+
+	unsigned int i;
+
+#if DEBUGINFO
+	std::cerr << "Before \n";
+	for (i = 0; i < BBName.size(); i++) {
+		std::cerr << "i : " << i << " BBName : " << i << BBName.at(i) << " BBCount : " << BBCount.at(i) << "\n";
 	}
+#endif
+
+
+	for (i = 0; i < BBName.size(); i++) {
+#if DEBUGINFO
+	std::cerr << "BBName.at : " << i << BBName.at(i) << "\n";
+#endif
+		if (BBName.at(i) == label.str()) {
+			BBCount.at(i)++;
+			if(BBCount.at(i) >= 3){
+				flag = -1;
+			}
+			break;
+		}
+	}
+	if(i == BBName.size()){
+		BBName.push_back(label.str());
+		BBCount.push_back(1);
+	}
+
+#if DEBUGINFO
+	std::cerr << "after \n";
+	for (i = 0; i < BBName.size(); i++) {
+		std::cerr << "i : " << i << " BBName : " << i << BBName.at(i) << " BBCount : " << BBCount.at(i) << "\n";
+	}
+#endif
+
 }
 
 int Encode::checkList(llvm::StringRef label) {
 	checkWhiteList(label);
 	checkBlackList(label);
 	checkUseList(label);
+	checkBBCount(label);
 	return flag;
 }
 

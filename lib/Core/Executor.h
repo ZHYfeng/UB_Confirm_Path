@@ -541,7 +541,10 @@ public:
                    ExecutionState &state) const;
   Cell& getDestCell(ExecutionState &state,
                     KInstruction *target) {
-    return state.stack.back().locals[target->dest];
+#if DEBUGINFO
+	  std::cerr << "target->dest : " << target->dest << "\n";
+#endif
+	  return state.stack.back().locals[target->dest];
   }
   void bindLocal(KInstruction *target,
                  ExecutionState &state,

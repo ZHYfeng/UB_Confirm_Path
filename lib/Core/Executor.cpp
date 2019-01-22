@@ -1060,6 +1060,10 @@ const Cell& Executor::eval(KInstruction *ki, unsigned index,
   } else {
     unsigned index = vnumber;
     StackFrame &sf = state.stack.back();
+#if DEBUGINFO
+    std::cerr << "index : " << index << "\n";
+    state.dumpStack(llvm::errs());
+#endif
     return sf.locals[index];
   }
 }
@@ -3661,8 +3665,23 @@ void Executor::executeMemoryOperation(ExecutionState &state,
       }
 
       return;
+    }else {
+#if DEBUGINFO
+    	std::cerr << "!inBounds\n";
+#endif
+    	const ObjectState *os = op.second;
+    	      if (isWrite) {
+
+    	      } else {
+    	          symbolic.load(state, target);
+    	      }
+    	      return;
     }
-  } 
+  }else {
+#if DEBUGINFO
+	  std::cerr << "!success\n";
+#endif
+  }
 
   // we are on an error path (no resolution, multiple resolution, one
   // resolution with out of bounds)
@@ -3711,8 +3730,9 @@ void Executor::executeMemoryOperation(ExecutionState &state,
     if (incomplete) {
       terminateStateEarly(*unbound, "Query timed out (resolve).");
     } else {
-      terminateStateOnError(*unbound, "memory error: out of bound pointer", Ptr,
-                            NULL, getAddressInfo(*unbound, address));
+//      terminateStateOnError(*unbound, "memory error: out of bound pointer", Ptr,
+//                            NULL, getAddressInfo(*unbound, address));
+    	klee_message("symbolic: memory error: out of bound pointer");
     }
   }
 }

@@ -18,8 +18,6 @@
 #include "../../include/klee/util/Ref.h"
 #include "KQuery2Z3.h"
 
-#define DEBUGINFO 1
-
 using namespace z3;
 
 namespace klee {
@@ -43,7 +41,8 @@ public:
 	std::vector<std::string> whiteList;
 	std::vector<std::string> blackList;
 	std::vector<std::string> useList;
-	std::map<std::string, int> BBCount;
+	std::vector<std::string> BBName;
+	std::vector<int> BBCount;
 	std::vector<int> isWhiteList;
 
 public:

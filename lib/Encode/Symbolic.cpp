@@ -114,6 +114,7 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 	bool successCurrent = executor->getMemoryObject(op, state,
 			&state.addressSpace, addressCurrent);
 	llvm::errs() << "successCurrent : " << successCurrent << "\n";
+	llvm::errs() << "id : " << id << "\n";
 #endif
 	ConstantExpr* realAddress = dyn_cast<ConstantExpr>(address);
 	if (realAddress) {
@@ -141,7 +142,7 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 							ki->inst->getType());
 					ref<Expr> value = executor->getDestCell(state, ki).value;
 					ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
-#if DUBUGINFO
+#if DEBUGINFO
 					std::cerr << " load symbolic value : ";
 					symbolic->dump();
 #endif
@@ -156,7 +157,32 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 //			assert(0 && "load resolve unsuccess");
 		}
 	} else {
-		assert(0 && " address is not const");
+		std::string ld;
+		llvm::raw_string_ostream rso(ld);
+		ki->inst->print(rso);
+		std::stringstream ss;
+		unsigned int j = rso.str().find("=");
+		for (unsigned int i = 2; i < j; i++) {
+			ss << rso.str().at(i);
+		}
+		GlobalName = ss.str();
+		if (id == Type::IntegerTyID || id == Type::PointerTyID) {
+			Expr::Width size = executor->getWidthForLLVMType(
+					ki->inst->getType());
+			ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+			executor->bindLocal(ki, state, symbolic);
+			ref<Expr> value = executor->getDestCell(state, ki).value;
+#if DEBUGINFO
+			std::cerr << " load symbolic value : ";
+			symbolic->dump();
+			std::cerr << " load value : ";
+			value->dump();
+#endif
+			state.encode.globalname.push_back(GlobalName);
+			state.encode.globalexpr.push_back(symbolic);
+		}else {
+			assert(0 && " address is not const");
+		}
 	}
 }
 
@@ -177,10 +203,13 @@ void Symbolic::call(ExecutionState &state, KInstruction *ki, Function *function,
 		std::string GlobalName = ss.str() + "call return";
 		ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
 		executor->bindLocal(ki, state, symbolic);
+		state.encode.globalname.push_back(GlobalName);
+		state.encode.globalexpr.push_back(symbolic);
 	}
 }
 
-void Symbolic::callReturnValue(ExecutionState &state, KInstruction *ki, Function *function) {
+void Symbolic::callReturnValue(ExecutionState &state, KInstruction *ki,
+		Function *function) {
 	Type *resultType = ki->inst->getType();
 	if (!resultType->isVoidTy()) {
 		Expr::Width size = executor->getWidthForLLVMType(ki->inst->getType());
@@ -196,6 +225,8 @@ void Symbolic::callReturnValue(ExecutionState &state, KInstruction *ki, Function
 		std::string GlobalName = ss.str() + "call return";
 		ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
 		executor->bindLocal(ki, state, symbolic);
+		state.encode.globalname.push_back(GlobalName);
+		state.encode.globalexpr.push_back(symbolic);
 	}
 }
 

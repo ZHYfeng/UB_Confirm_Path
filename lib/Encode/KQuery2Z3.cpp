@@ -150,7 +150,6 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 #endif
 
 		}
-		ele->dump();
 		return res;
 	}
 
@@ -209,7 +208,6 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 		} else {
 			res = src;
 		}
-		ele->dump();
 		return res;
 	}
 
