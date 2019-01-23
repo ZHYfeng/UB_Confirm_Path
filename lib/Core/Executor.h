@@ -539,6 +539,8 @@ public:
   bool isGlobalMO(const MemoryObject* mo);
   const Cell& eval(KInstruction *ki, unsigned index,
                    ExecutionState &state) const;
+  Cell& uneval(KInstruction *ki, unsigned index,
+                     ExecutionState &state);
   Cell& getDestCell(ExecutionState &state,
                     KInstruction *target) {
 #if DEBUGINFO

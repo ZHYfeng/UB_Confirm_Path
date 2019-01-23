@@ -1045,7 +1045,7 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
                                  ConstantExpr::alloc(1, Expr::Bool));
 }
 
-const Cell& Executor::eval(KInstruction *ki, unsigned index, 
+const Cell& Executor::eval(KInstruction *ki, unsigned index,
                            ExecutionState &state) const {
   assert(index < ki->inst->getNumOperands());
   int vnumber = ki->operands[index];
@@ -1067,6 +1067,30 @@ const Cell& Executor::eval(KInstruction *ki, unsigned index,
     return sf.locals[index];
   }
 }
+
+Cell& Executor::uneval(KInstruction *ki, unsigned index,
+                           ExecutionState &state) {
+  assert(index < ki->inst->getNumOperands());
+  int vnumber = ki->operands[index];
+
+  assert(vnumber != -1 &&
+         "Invalid operand to eval(), not a value or constant!");
+
+  // Determine if this is a constant or not.
+  if (vnumber < 0) {
+    unsigned index = -vnumber - 2;
+    return kmodule->constantTable[index];
+  } else {
+    unsigned index = vnumber;
+    StackFrame &sf = state.stack.back();
+#if DEBUGINFO
+    std::cerr << "index : " << index << "\n";
+    state.dumpStack(llvm::errs());
+#endif
+    return sf.locals[index];
+  }
+}
+
 
 void Executor::bindLocal(KInstruction *target, ExecutionState &state, 
                          ref<Expr> value) {
@@ -3220,7 +3244,7 @@ void Executor::callExternalFunction(ExecutionState &state,
 //                                  "external call with symbolic argument: " +
 //                                  function->getName());
   	  klee_message("symbolic: (location information missing) %s", "external call with symbolic argument: " + function->getName());
-  	  symbolic.call(state, target, function, arguments);
+  	  symbolic.callReturnValue(state, target, function);
         return;
       }
     }
@@ -3272,7 +3296,7 @@ void Executor::callExternalFunction(ExecutionState &state,
 //    terminateStateOnError(state, "failed external call: " + function->getName(),
 //                          External);
 	  klee_message("symbolic: (location information missing) %s", "failed external call" + function->getName());
-	  symbolic.call(state, target, function, arguments);
+	  symbolic.callReturnValue(state, target, function);
 
     return;
   }

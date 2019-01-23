@@ -265,7 +265,7 @@ void Encode::checkUseList(llvm::StringRef label) {
 				if (result == z3::sat) {
 					flag = 0;
 					model m = z3_solverr.get_model();
-#if !DEBUGINFO
+#if DEBUGINFO||!DEBUGINFO
 					std::cerr << "Yes!\n";
 					std::cerr << "\nz3_solver.get_model()\n";
 					std::cerr << "\n" << m << "\n";

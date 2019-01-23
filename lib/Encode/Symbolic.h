@@ -41,8 +41,6 @@ private:
 
 public:
 	void load(ExecutionState &state, KInstruction *ki);
-	void call(ExecutionState &state, KInstruction *ki, Function *function,
-			std::vector<ref<Expr> > &arguments);
 	void callReturnValue(ExecutionState &state, KInstruction *ki, Function *function);
 
 private:

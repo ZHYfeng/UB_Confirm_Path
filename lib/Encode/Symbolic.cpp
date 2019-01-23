@@ -7,8 +7,9 @@
 
 #include "Symbolic.h"
 
-#include <llvm/ADT/StringRef.h>
-#include <llvm/IR/Instructions.h>
+#include <bits/stdint-uintn.h>
+#include <llvm/IR/CallSite.h>
+#include <llvm/IR/Instruction.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
 #include <llvm/Support/Casting.h>
@@ -21,6 +22,7 @@
 #include "../Core/AddressSpace.h"
 #include "../Core/Executor.h"
 #include "../Core/Memory.h"
+#include "Encode.h"
 
 namespace klee {
 
@@ -186,28 +188,6 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 	}
 }
 
-void Symbolic::call(ExecutionState &state, KInstruction *ki, Function *function,
-		std::vector<ref<Expr> > &arguments) {
-	Type *resultType = ki->inst->getType();
-	if (resultType != Type::getVoidTy(function->getContext())) {
-		Expr::Width size = executor->getWidthForLLVMType(ki->inst->getType());
-		std::string ld;
-		llvm::raw_string_ostream rso(ld);
-		ki->inst->print(rso);
-		std::stringstream ss;
-		unsigned int j = rso.str().find("=");
-		for (unsigned int i = 2; i < j; i++) {
-			ss << rso.str().at(i);
-		}
-
-		std::string GlobalName = ss.str() + "call return";
-		ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
-		executor->bindLocal(ki, state, symbolic);
-		state.encode.globalname.push_back(GlobalName);
-		state.encode.globalexpr.push_back(symbolic);
-	}
-}
-
 void Symbolic::callReturnValue(ExecutionState &state, KInstruction *ki,
 		Function *function) {
 	Type *resultType = ki->inst->getType();
@@ -227,6 +207,22 @@ void Symbolic::callReturnValue(ExecutionState &state, KInstruction *ki,
 		executor->bindLocal(ki, state, symbolic);
 		state.encode.globalname.push_back(GlobalName);
 		state.encode.globalexpr.push_back(symbolic);
+
+		Instruction *i = ki->inst;
+		llvm::CallSite cs(i);
+		unsigned numArgs = cs.arg_size();
+		for (unsigned j=0; j<numArgs; ++j) {
+			std::string argName = ss.str() + std::to_string(j);
+			Expr::Width size = executor->getWidthForLLVMType(cs.getArgument(j)->getType());
+			ref<Expr> arg = manualMakeSymbolic(argName, size);
+			executor->uneval(ki, j+1, state).value = arg;
+#if DEBUGINFO
+			std::cerr << "argName : " << argName << "\n";
+			std::cerr << "size : " << size << "\n";
+			std::cerr << "arg : ";
+			arg->dump();
+#endif
+		}
 	}
 }
 
