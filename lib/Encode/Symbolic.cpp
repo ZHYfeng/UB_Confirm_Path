@@ -7,7 +7,6 @@
 
 #include "Symbolic.h"
 
-#include <bits/stdint-uintn.h>
 #include <llvm/IR/CallSite.h>
 #include <llvm/IR/Instruction.h>
 #include <llvm/IR/Type.h>
