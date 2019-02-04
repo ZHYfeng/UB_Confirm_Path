@@ -2227,8 +2227,11 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 
   case Instruction::Load: {
     ref<Expr> base = eval(ki, 0, state).value;
+#if DEBUGINFO
+    std::cerr << "load base :";
+    base->dump();
+#endif
     executeMemoryOperation(state, false, base, 0, ki);
-
     break;
   }
   case Instruction::Store: {
@@ -2237,6 +2240,8 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 #if DEBUGINFO
     std::cerr << "store value :";
     value->dump();
+    std::cerr << "store base :";
+    base->dump();
 #endif
     executeMemoryOperation(state, true, base, value, 0);
     break;
@@ -3693,7 +3698,6 @@ void Executor::executeMemoryOperation(ExecutionState &state,
 #if DEBUGINFO
     	std::cerr << "!inBounds\n";
 #endif
-    	const ObjectState *os = op.second;
     	      if (isWrite) {
 
     	      } else {
@@ -3705,6 +3709,11 @@ void Executor::executeMemoryOperation(ExecutionState &state,
 #if DEBUGINFO
 	  std::cerr << "!success\n";
 #endif
+	  if (isWrite) {
+
+	  } else {
+		  symbolic.load(state, target);
+	  }
   }
 
   // we are on an error path (no resolution, multiple resolution, one
