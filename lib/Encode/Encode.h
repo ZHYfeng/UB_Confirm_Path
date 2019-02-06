@@ -32,7 +32,8 @@ public:
 	context *z3_ctxx;
 	solver z3_solverr;
 	KQuery2Z3 kq;
-	std::vector<expr> constraintExpr;
+	std::vector<ref<Expr>> constraintExpr;
+	std::vector<expr> constraintexpr;
 	std::vector<bool> path;
 	std::vector<std::string> globalname;
 	std::vector<ref<Expr>> globalexpr;
@@ -54,6 +55,11 @@ public:
 	void checkUseList(llvm::StringRef label);
 	void checkBBCount(llvm::StringRef label);
 	int checkList(llvm::StringRef label);
+	static std::string getName(ref<Expr> value);
+	static bool IsRet(std::string globalVarFullName);
+	static std::string getSymbolicName(ref<Expr> value);
+	static void resolveSymbolicExpr(ref<Expr> value,
+			std::set<std::string> &relatedSymbolicExpr);
 };
 
 }

@@ -37,8 +37,8 @@ Encode::Encode() :
 }
 
 Encode::Encode(const Encode &e) :
-		z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), constraintExpr(
-				e.constraintExpr), path(e.path), globalname(e.globalname), globalexpr(
+		z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), constraintexpr(
+				e.constraintexpr), path(e.path), globalname(e.globalname), globalexpr(
 				e.globalexpr), flag(e.flag), Json(e.Json), whiteList(
 				e.whiteList), blackList(e.blackList), useList(e.useList), BBName(e.BBName), BBCount(
 				e.BBCount), isWhiteList(e.isWhiteList) {
@@ -176,6 +176,7 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 		llvm::StringRef labelTrue, llvm::StringRef labelFalse) {
 
 	path.push_back(isTrue);
+	constraintExpr.push_back(cond);
 
 	expr constraint = z3_ctxx->bool_val(1);
 	expr brCond = kq.getZ3Expr(cond);
@@ -186,7 +187,7 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 	}else {
 		constraint = ((brCond >= 0) == brIsTrue);
 	}
-	constraintExpr.push_back(constraint);
+	constraintexpr.push_back(constraint);
 #if DEBUGINFO
 	std::cerr << "brCond : " << brCond << "\n";
 	std::cerr << "addBr : " << constraint << "\n";
@@ -195,7 +196,7 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 
 	expr brLabelTrue = z3_ctxx->int_const(labelTrue.str().c_str());
 	constraint = (brLabelTrue == true);
-	constraintExpr.push_back(constraint);
+	constraintexpr.push_back(constraint);
 #if DEBUGINFO
 	std::cerr << "addBr : " << constraint << "\n";
 #endif
@@ -206,8 +207,8 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 
 #if DEBUGINFO
 	std::cerr << "all : \n";
-	for (unsigned int i = 0; i < constraintExpr.size(); i++) {
-		std::cerr << constraintExpr[i] << "\n";
+	for (unsigned int i = 0; i < constraintexpr.size(); i++) {
+		std::cerr << constraintexpr[i] << "\n";
 	}
 	std::cerr << "path : \n";
 	for (unsigned int i = 0; i < path.size(); i++) {
@@ -255,11 +256,11 @@ void Encode::checkUseList(llvm::StringRef label) {
 			llvm::errs() << "useList : " << useList[i] << "\n";
 #endif
 			if (useList[i] == label.str()) {
-				for (unsigned int i = 0; i < constraintExpr.size(); i++) {
+				for (unsigned int i = 0; i < constraintexpr.size(); i++) {
 #if DEBUGINFO
-					std::cerr << constraintExpr[i] << "\n";
+					std::cerr << constraintexpr[i] << "\n";
 #endif
-					z3_solverr.add(constraintExpr[i]);
+					z3_solverr.add(constraintexpr[i]);
 				}
 				check_result result = z3_solverr.check();
 				if (result == z3::sat) {
@@ -283,6 +284,26 @@ void Encode::checkUseList(llvm::StringRef label) {
 						ss.str("");
 						ss << m.eval(kq.getZ3Expr(globalexpr.at(i)));
 						json["symbolic"][globalname.at(i)] = ss.str();
+					}
+					bool isRet = false;
+					for (std::vector<ref<Expr>>::iterator it =
+							constraintExpr.begin(), ie = constraintExpr.end();
+							it != ie; it++) {
+						std::set<std::string> relatedSymbolicExpr;
+						resolveSymbolicExpr((*it), relatedSymbolicExpr);
+						for (std::set<std::string>::iterator iit =
+								relatedSymbolicExpr.begin(), iie =
+								relatedSymbolicExpr.end(); iit != iie; iit++) {
+							if(IsRet(*iit)){
+								isRet = true;
+							}
+						}
+
+					}
+					if(isRet){
+						json["priority"] = "low";
+					}else {
+						json["priority"] = "high";
 					}
 					std::ofstream out_file("confirm_result.txt",
 							std::ios_base::out | std::ios_base::app);
@@ -334,6 +355,53 @@ void Encode::checkBBCount(llvm::StringRef label) {
 	}
 #endif
 
+}
+
+std::string Encode::getName(ref<klee::Expr> value) {
+	std::string globalName = getSymbolicName(value);
+	return globalName;
+}
+
+bool Encode::IsRet(std::string globalName) {
+	bool IsRet = false;
+	if(globalName.find("call") < globalName.size()){
+		IsRet = true;
+	}
+	return IsRet;
+}
+
+std::string Encode::getSymbolicName(ref<klee::Expr> value) {
+
+	ReadExpr *revalue;
+	if (value->getKind() == Expr::Concat) {
+		ConcatExpr *ccvalue = cast<ConcatExpr>(value);
+		revalue = cast<ReadExpr>(ccvalue->getKid(0));
+	} else if (value->getKind() == Expr::Read) {
+		revalue = cast<ReadExpr>(value);
+	} else {
+		assert(0 && "getGlobalName");
+	}
+	std::string globalName = revalue->updates.root->name;
+	return globalName;
+}
+
+void Encode::resolveSymbolicExpr(ref<klee::Expr> symbolicExpr, std::set<std::string> &relatedSymbolicExpr) {
+	if (symbolicExpr->getKind() == Expr::Read) {
+		std::string name = getName(symbolicExpr);
+		if (relatedSymbolicExpr.find(name) == relatedSymbolicExpr.end()) {
+			relatedSymbolicExpr.insert(name);
+		}
+		return;
+	} else {
+		unsigned kidsNum = symbolicExpr->getNumKids();
+		if (kidsNum == 2 && symbolicExpr->getKid(0) == symbolicExpr->getKid(1)) {
+			resolveSymbolicExpr(symbolicExpr->getKid(0), relatedSymbolicExpr);
+		} else {
+			for (unsigned int i = 0; i < kidsNum; i++) {
+				resolveSymbolicExpr(symbolicExpr->getKid(i), relatedSymbolicExpr);
+			}
+		}
+	}
 }
 
 int Encode::checkList(llvm::StringRef label) {
