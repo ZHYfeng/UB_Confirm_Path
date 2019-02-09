@@ -294,7 +294,7 @@ void Encode::checkUseList(llvm::StringRef label) {
 						for (std::set<std::string>::iterator iit =
 								relatedSymbolicExpr.begin(), iie =
 								relatedSymbolicExpr.end(); iit != iie; iit++) {
-							if ((*iit).find("nocon") <= (*iit).size()) {
+							if ((*iit).find("con") <= (*iit).size()) {
 								allkind[0] = 1;
 							}
 							if ((*iit).find("noaddr") <= (*iit).size()) {
@@ -316,7 +316,7 @@ void Encode::checkUseList(llvm::StringRef label) {
 					}
 					std::string kind = "high";
 					if (allkind[0] == 1) {
-						kind += "+nocon";
+						kind += "+con";
 					}
 					if (allkind[1] == 1) {
 						allkind[1] = 1;

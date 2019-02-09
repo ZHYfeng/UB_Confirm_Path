@@ -138,7 +138,7 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 				if(mo->isGlobal){
 
 				}else {
-					ss << "nocon";
+					ss << "con";
 				}
 				GlobalName = createGlobalVarFullName(ss.str(), mo->id, key,
 						isGlobal, loadTime, false);
