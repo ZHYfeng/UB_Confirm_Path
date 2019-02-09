@@ -135,7 +135,11 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 				for (unsigned int i = 2; i < j; i++) {
 					ss << rso.str().at(i);
 				}
+				if(mo->isGlobal){
 
+				}else {
+					ss << "nocon";
+				}
 				GlobalName = createGlobalVarFullName(ss.str(), mo->id, key,
 						isGlobal, loadTime, false);
 				if (id == Type::IntegerTyID) {
@@ -163,7 +167,7 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 					for (unsigned int i = 2; i < j; i++) {
 						ss << rso.str().at(i);
 					}
-					GlobalName = ss.str();
+					GlobalName = ss.str() + "erroraddr";
 					if (id == Type::IntegerTyID || id == Type::PointerTyID) {
 						Expr::Width size = executor->getWidthForLLVMType(
 								ki->inst->getType());
@@ -191,7 +195,7 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 		for (unsigned int i = 2; i < j; i++) {
 			ss << rso.str().at(i);
 		}
-		GlobalName = ss.str();
+		GlobalName = ss.str() + "noaddr";
 		if (id == Type::IntegerTyID || id == Type::PointerTyID) {
 			Expr::Width size = executor->getWidthForLLVMType(
 					ki->inst->getType());
@@ -236,7 +240,7 @@ void Symbolic::callReturnValue(ExecutionState &state, KInstruction *ki,
 		llvm::CallSite cs(i);
 		unsigned numArgs = cs.arg_size();
 		for (unsigned j=0; j<numArgs; ++j) {
-			std::string argName = ss.str() + std::to_string(j);
+			std::string argName = ss.str() + "call arg" + std::to_string(j);
 			Expr::Width size = executor->getWidthForLLVMType(cs.getArgument(j)->getType());
 			ref<Expr> arg = manualMakeSymbolic(argName, size);
 			executor->uneval(ki, j+1, state).value = arg;

@@ -56,7 +56,6 @@ public:
 	void checkBBCount(llvm::StringRef label);
 	int checkList(llvm::StringRef label);
 	static std::string getName(ref<Expr> value);
-	static bool IsRet(std::string globalVarFullName);
 	static std::string getSymbolicName(ref<Expr> value);
 	static void resolveSymbolicExpr(ref<Expr> value,
 			std::set<std::string> &relatedSymbolicExpr);

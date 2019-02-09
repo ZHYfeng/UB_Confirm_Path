@@ -3621,7 +3621,7 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                               size = kmodule->targetData->getTypeStoreSize(kind);
                           }
                           MemoryObject *lmo = memory->allocate(size,
-                                  /*isLocal=*/false, /*isGlobal=*/true,
+                                  /*isLocal=*/false, /*isGlobal=*/false,
                                   /*allocSite=*/target->inst, /*alignment=*/8);
                           bindObjectInState(state, lmo, false);
                           expr = lmo->getBaseExpr();
@@ -3635,11 +3635,15 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                   }
                   case llvm::Type::IntegerTyID: {
                       if (IntegerType *it = dyn_cast<IntegerType>(ty)) {
-
-                          std::stringstream ss;
-                          std::string name = ss.str();
-
-                          argNum++;
+                    	  std::string ld;
+                    	  llvm::raw_string_ostream rso(ld);
+                    	  target->inst->print(rso);
+                    	  std::stringstream ss;
+                    	  unsigned int j = rso.str().find("=");
+                    	  for (unsigned int i = 2; i < j; i++) {
+                    	  	ss << rso.str().at(i);
+                    	  }
+                          std::string name = ss.str() + "uninit";
                           if (ty->isSized()) {
                               size = kmodule->targetData->getTypeStoreSize(ty);
                           }
@@ -3662,7 +3666,7 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                               size = kmodule->targetData->getTypeStoreSize(ty);
                           }
                           MemoryObject *lmo = memory->allocate(size,
-                                  /*isLocal=*/false, /*isGlobal=*/true,
+                                  /*isLocal=*/false, /*isGlobal=*/false,
                                   /*allocSite=*/target->inst, /*alignment=*/8);
                           for(Type::subtype_iterator ae = st->element_begin(); ae != st->element_end(); ){
                               ae++;
@@ -3866,7 +3870,7 @@ ref<Expr> Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 				size = kmodule->targetData->getTypeStoreSize(kind);
 		    }
 			MemoryObject *mo = memory->allocate(size,
-			/*isLocal=*/false, /*isGlobal=*/true,
+			/*isLocal=*/false, /*isGlobal=*/false,
 			/*allocSite=*/first, /*alignment=*/8);
 			bindObjectInState(state, mo, false);
 			expr = mo->getBaseExpr();
@@ -3882,7 +3886,7 @@ ref<Expr> Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 		if (IntegerType *it = dyn_cast<IntegerType>(ty)) {
 
 			std::stringstream ss;
-			ss << "arg_" << argNum;
+			ss << "input_" << argNum;
 			std::string name = ss.str();
 
 			argNum++;

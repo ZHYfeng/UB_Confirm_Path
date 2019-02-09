@@ -40,8 +40,8 @@ Encode::Encode(const Encode &e) :
 		z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), constraintexpr(
 				e.constraintexpr), path(e.path), globalname(e.globalname), globalexpr(
 				e.globalexpr), flag(e.flag), Json(e.Json), whiteList(
-				e.whiteList), blackList(e.blackList), useList(e.useList), BBName(e.BBName), BBCount(
-				e.BBCount), isWhiteList(e.isWhiteList) {
+				e.whiteList), blackList(e.blackList), useList(e.useList), BBName(
+				e.BBName), BBCount(e.BBCount), isWhiteList(e.isWhiteList) {
 }
 
 Encode::~Encode() {
@@ -182,9 +182,9 @@ void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
 	expr brCond = kq.getZ3Expr(cond);
 	expr brIsTrue = z3_ctxx->bool_val(isTrue);
 
-	if(brCond.is_bool()){
+	if (brCond.is_bool()) {
 		constraint = (brCond == brIsTrue);
-	}else {
+	} else {
 		constraint = ((brCond >= 0) == brIsTrue);
 	}
 	constraintexpr.push_back(constraint);
@@ -285,7 +285,7 @@ void Encode::checkUseList(llvm::StringRef label) {
 						ss << m.eval(kq.getZ3Expr(globalexpr.at(i)));
 						json["symbolic"][globalname.at(i)] = ss.str();
 					}
-					bool isRet = false;
+					int allkind[10] = { 0 };
 					for (std::vector<ref<Expr>>::iterator it =
 							constraintExpr.begin(), ie = constraintExpr.end();
 							it != ie; it++) {
@@ -294,17 +294,47 @@ void Encode::checkUseList(llvm::StringRef label) {
 						for (std::set<std::string>::iterator iit =
 								relatedSymbolicExpr.begin(), iie =
 								relatedSymbolicExpr.end(); iit != iie; iit++) {
-							if(IsRet(*iit)){
-								isRet = true;
+							if ((*iit).find("nocon") <= (*iit).size()) {
+								allkind[0] = 1;
+							}
+							if ((*iit).find("noaddr") <= (*iit).size()) {
+								allkind[1] = 1;
+							}
+							if ((*iit).find("erroraddr") <= (*iit).size()) {
+								allkind[2] = 1;
+							}
+							if ((*iit).find("input") <= (*iit).size()) {
+								allkind[3] = 1;
+							}
+							if ((*iit).find("returen") <= (*iit).size()) {
+								allkind[4] = 1;
+							}
+							if ((*iit).find("arg") <= (*iit).size()) {
+								allkind[5] = 1;
 							}
 						}
-
 					}
-					if(isRet){
-						json["priority"] = "low";
-					}else {
-						json["priority"] = "high";
+					std::string kind = "high";
+					if (allkind[0] == 1) {
+						kind += "+nocon";
 					}
+					if (allkind[1] == 1) {
+						allkind[1] = 1;
+						kind += "+noaddr";
+					}
+					if (allkind[2] == 1) {
+						kind += "+erroraddr";
+					}
+					if (allkind[3] == 1) {
+						kind += "+input";
+					}
+					if (allkind[4] == 1) {
+						kind += "+returen";
+					}
+					if (allkind[5] == 1) {
+						kind += "+arg";
+					}
+					json["priority"] = kind;
 					std::ofstream out_file("confirm_result.txt",
 							std::ios_base::out | std::ios_base::app);
 					out_file << json.dump() << "\n";
@@ -330,20 +360,19 @@ void Encode::checkBBCount(llvm::StringRef label) {
 	}
 #endif
 
-
 	for (i = 0; i < BBName.size(); i++) {
 #if DEBUGINFO
-	std::cerr << "BBName.at : " << i << BBName.at(i) << "\n";
+		std::cerr << "BBName.at : " << i << BBName.at(i) << "\n";
 #endif
 		if (BBName.at(i) == label.str()) {
-			BBCount.at(i)++;
-			if(BBCount.at(i) >= 3){
+			BBCount.at(i)++;if
+(			BBCount.at(i) >= 3) {
 				flag = -1;
 			}
 			break;
 		}
 	}
-	if(i == BBName.size()){
+	if (i == BBName.size()) {
 		BBName.push_back(label.str());
 		BBCount.push_back(1);
 	}
@@ -362,14 +391,6 @@ std::string Encode::getName(ref<klee::Expr> value) {
 	return globalName;
 }
 
-bool Encode::IsRet(std::string globalName) {
-	bool IsRet = false;
-	if(globalName.find("call") < globalName.size()){
-		IsRet = true;
-	}
-	return IsRet;
-}
-
 std::string Encode::getSymbolicName(ref<klee::Expr> value) {
 
 	ReadExpr *revalue;
@@ -385,7 +406,8 @@ std::string Encode::getSymbolicName(ref<klee::Expr> value) {
 	return globalName;
 }
 
-void Encode::resolveSymbolicExpr(ref<klee::Expr> symbolicExpr, std::set<std::string> &relatedSymbolicExpr) {
+void Encode::resolveSymbolicExpr(ref<klee::Expr> symbolicExpr,
+		std::set<std::string> &relatedSymbolicExpr) {
 	if (symbolicExpr->getKind() == Expr::Read) {
 		std::string name = getName(symbolicExpr);
 		if (relatedSymbolicExpr.find(name) == relatedSymbolicExpr.end()) {
@@ -394,11 +416,13 @@ void Encode::resolveSymbolicExpr(ref<klee::Expr> symbolicExpr, std::set<std::str
 		return;
 	} else {
 		unsigned kidsNum = symbolicExpr->getNumKids();
-		if (kidsNum == 2 && symbolicExpr->getKid(0) == symbolicExpr->getKid(1)) {
+		if (kidsNum == 2
+				&& symbolicExpr->getKid(0) == symbolicExpr->getKid(1)) {
 			resolveSymbolicExpr(symbolicExpr->getKid(0), relatedSymbolicExpr);
 		} else {
 			for (unsigned int i = 0; i < kidsNum; i++) {
-				resolveSymbolicExpr(symbolicExpr->getKid(i), relatedSymbolicExpr);
+				resolveSymbolicExpr(symbolicExpr->getKid(i),
+						relatedSymbolicExpr);
 			}
 		}
 	}
