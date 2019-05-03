@@ -3248,7 +3248,8 @@ void Executor::callExternalFunction(ExecutionState &state,
 //        terminateStateOnExecError(state,
 //                                  "external call with symbolic argument: " +
 //                                  function->getName());
-  	  klee_message("symbolic: (location information missing) %s", "external call with symbolic argument: " + function->getName());
+      std::string message = "external call with symbolic argument: " + function->getName().str();
+  	  klee_message("symbolic: (location information missing) %s", message.c_str());
   	  symbolic.callReturnValue(state, target, function);
         return;
       }
@@ -3300,7 +3301,8 @@ void Executor::callExternalFunction(ExecutionState &state,
   if (!success) {
 //    terminateStateOnError(state, "failed external call: " + function->getName(),
 //                          External);
-	  klee_message("symbolic: (location information missing) %s", "failed external call" + function->getName());
+      std::string message = "failed external call" + function->getName().str();
+	  klee_message("symbolic: (location information missing) %s", message.c_str());
 	  symbolic.callReturnValue(state, target, function);
 
     return;

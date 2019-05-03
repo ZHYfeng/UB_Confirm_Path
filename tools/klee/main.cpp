@@ -1075,11 +1075,10 @@ int main(int argc, char **argv, char **envp) {
 
 	const auto json = json11::Json::parse(Json, err);
 //
-	std::string temp = "./" + json["bc"].dump();
-	temp.erase(temp.begin(),temp.begin()+3);
-	temp.erase(temp.end()-1,temp.end());
-	InputFile = temp;
-
+//	std::string temp = "./" + json["bc"].dump();
+//	temp.erase(temp.begin(),temp.begin()+3);
+//	temp.erase(temp.end()-1,temp.end());
+//	InputFile = temp;
 	std::cerr << "bc : " << InputFile << "\n";
 
 	EntryPoint = json["function"].dump();
@@ -1294,19 +1293,15 @@ int main(int argc, char **argv, char **envp) {
 
   // Get the desired main function.  klee_main initializes uClibc
   // locale and other data and then calls main.
-
   auto finalModule = interpreter->setModule(loadedModules, Opts);
   Function *mainFn = finalModule->getFunction(EntryPoint);
   if (!mainFn) {
     klee_error("Entry function '%s' not found in module.", EntryPoint.c_str());
   }
-
   externalsAndGlobalsCheck(finalModule);
-
   if (ReplayPathFile != "") {
     interpreter->setReplayPath(&replayPath);
   }
-
 
   auto startTime = std::time(nullptr);
   { // output clock info and start time
@@ -1317,7 +1312,6 @@ int main(int argc, char **argv, char **envp) {
     handler->getInfoStream() << startInfo.str();
     handler->getInfoStream().flush();
   }
-
 //  interpreter->json(Json);
 
   if (!ReplayKTestDir.empty() || !ReplayKTestFile.empty()) {
