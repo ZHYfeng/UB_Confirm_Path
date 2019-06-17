@@ -121,8 +121,9 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 #else
                 res = z3_ctx.bv_val(temp, BIT_WIDTH);
 #endif
-
+#if DEBUGINFO
                 std::cerr << "case Expr::Constant: " << res << std::endl;
+#endif
             } else {
                 assert(0 && "The Fl80 out, value bit number extends 64");
             }
@@ -234,7 +235,9 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
             } else {
                 res = src;
             }
+#if DEBUGINFO
             std::cerr << "case Expr::ZExt: " << res << std::endl;
+#endif
             return res;
         }
 
@@ -478,7 +481,9 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
             res = z3::to_expr(z3_ctx, Z3_mk_bv2int(z3_ctx, tempRes, true));
 #else
             auto temp = Z3_mk_bvashr(z3_ctx, left, right);
+#if DEBUGINFO
             std::cout << "Z3_get_ast_kind : " << Z3_get_ast_kind(z3_ctx, temp) << std::endl;
+#endif
             res = z3::to_expr(z3_ctx, temp);
 #endif
 
