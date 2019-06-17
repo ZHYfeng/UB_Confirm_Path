@@ -13,7 +13,7 @@
 #include <map>
 #include <string>
 #include <vector>
-
+#include "json.hpp"
 #include "../../include/klee/Expr.h"
 #include "../../include/klee/util/Ref.h"
 #include "KQuery2Z3.h"
@@ -42,9 +42,11 @@ public:
 	std::vector<std::string> whiteList;
 	std::vector<std::string> blackList;
 	std::vector<std::string> useList;
+    std::vector<std::string> alt_blist;
 	std::vector<std::string> BBName;
 	std::vector<int> BBCount;
 	std::vector<int> isWhiteList;
+    nlohmann::json json;
 
 public:
 	void addList();

@@ -23,7 +23,7 @@
 #include "../../include/klee/Expr.h"
 #include "../../include/klee/util/Ref.h"
 
-#define BIT_WIDTH 64
+#define BIT_WIDTH 32
 
 using namespace z3;
 namespace klee {

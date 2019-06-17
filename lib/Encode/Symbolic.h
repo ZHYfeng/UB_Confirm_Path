@@ -21,8 +21,6 @@ namespace llvm {
 class Function;
 } /* namespace llvm */
 
-#define BIT_WIDTH 64
-
 using namespace llvm;
 
 namespace klee {
