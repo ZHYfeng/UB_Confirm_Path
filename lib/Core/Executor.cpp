@@ -1555,6 +1555,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         result = state.encode.checkList(i->getParent()->getName());
         if (result == -1) {
             terminateState(state);
+            return;
         } else if (result == 0) {
             exit(0);
         }
@@ -3090,7 +3091,7 @@ void Executor::terminateState(ExecutionState &state) {
             std::find(addedStates.begin(), addedStates.end(), &state);
     if (it == addedStates.end()) {
         state.pc = state.prevPC;
-
+        std::cerr << "terminateState remove ExecutionState : " << &state << "\n";
         removedStates.push_back(&state);
     } else {
         // never reached searcher, just delete immediately
