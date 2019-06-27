@@ -203,7 +203,7 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 #else
                 res = z3::ite(
 //					z3::to_expr(z3_ctx, Z3_mk_extract(z3_ctx, 0, 0, src)),
-                        src,
+                        (src != 0),
                         z3_ctx.bv_val(1, BIT_WIDTH), z3_ctx.bv_val(0, BIT_WIDTH));
 #endif
 
@@ -222,7 +222,7 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 #if INT_ARITHMETIC
                 res = z3::ite(src, z3_ctx.int_val(1), z3_ctx.int_val(0));
 #else
-                res = z3::ite(src, z3_ctx.bv_val(1, BIT_WIDTH), z3_ctx.bv_val(0, BIT_WIDTH));
+                res = z3::ite((src != 0), z3_ctx.bv_val(1, BIT_WIDTH), z3_ctx.bv_val(0, BIT_WIDTH));
 //				res = z3::ite(
 //					z3::to_expr(z3_ctx, Z3_mk_extract(z3_ctx, 0, 0, src)),
 //					z3_ctx.bool_val(true), z3_ctx.bool_val(false));

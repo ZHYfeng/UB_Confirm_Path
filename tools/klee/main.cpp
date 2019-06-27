@@ -1080,7 +1080,7 @@ int main(int argc, char **argv, char **envp) {
 //	temp.erase(temp.end()-1,temp.end());
 //	InputFile = temp;
 	std::cerr << "bc : " << InputFile << "\n";
-
+    std::cerr << "json : " << Json << "\n";
 	EntryPoint = json["function"].dump();
 	EntryPoint.erase(EntryPoint.begin(),EntryPoint.begin()+1);
 	EntryPoint.erase(EntryPoint.end()-1,EntryPoint.end());

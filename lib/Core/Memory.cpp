@@ -420,7 +420,7 @@ ref<Expr> ObjectState::read8(unsigned offset) const {
   } else if (isByteKnownSymbolic(offset)) {
     return knownSymbolics[offset];
   } else {
-    assert(isByteFlushed(offset) && "unflushed byte without cache value");
+//    assert(isByteFlushed(offset) && "unflushed byte without cache value");
     
     return ReadExpr::create(getUpdates(), 
                             ConstantExpr::create(offset, Expr::Int32));

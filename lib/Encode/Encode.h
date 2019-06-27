@@ -34,10 +34,11 @@ public:
 	KQuery2Z3 kq;
 	std::vector<ref<Expr>> constraintExpr;
 	std::vector<expr> constraintexpr;
+    std::vector<std::string> path_name;
 	std::vector<bool> path;
 	std::vector<std::string> globalname;
 	std::vector<ref<Expr>> globalexpr;
-	unsigned int flag;
+	int flag;
 	std::string Json;
 	std::vector<std::string> whiteList;
 	std::vector<std::string> blackList;
@@ -50,7 +51,7 @@ public:
 
 public:
 	void addList();
-	void addBrConstraint(ref<Expr> cond, bool isTrue, llvm::StringRef labelTrue,
+    int addBrConstraint(ref<Expr> cond, bool isTrue, llvm::StringRef labelTrue,
 			llvm::StringRef labelFalse);
 	void checkWhiteList(llvm::StringRef label);
 	void checkBlackList(llvm::StringRef label);
@@ -61,6 +62,7 @@ public:
 	static std::string getSymbolicName(ref<Expr> value);
 	static void resolveSymbolicExpr(ref<Expr> value,
 			std::set<std::string> &relatedSymbolicExpr);
+	void addpath(std::string p);
 };
 
 }

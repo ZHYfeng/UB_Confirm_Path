@@ -33,16 +33,42 @@ namespace klee {
 
     Encode::Encode() :
             z3_ctxx(new context()), z3_solverr(*z3_ctxx), kq(*z3_ctxx), flag(1) {
-//	addList();
     }
 
     Encode::Encode(const Encode &e) :
-            z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), constraintexpr(
-            e.constraintexpr), path(e.path), globalname(e.globalname), globalexpr(
-            e.globalexpr), flag(e.flag), Json(e.Json), whiteList(
-            e.whiteList), blackList(e.blackList), useList(e.useList), BBName(
-            e.BBName), BBCount(e.BBCount), isWhiteList(e.isWhiteList) {
+            z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), flag(e.flag), Json(e.Json), whiteList(
+            e.whiteList), blackList(e.blackList), useList(e.useList) {
         json = nlohmann::json::parse(Json);
+        for(auto i : e.constraintexpr){
+            this->constraintexpr.push_back(i);
+        }
+        for(auto i : e.constraintexpr){
+            this->constraintexpr.push_back(i);
+        }
+        for(auto i : e.path_name){
+            this->path_name.push_back(i);
+        }
+        for(auto i : e.path){
+            this->path.push_back(i);
+        }
+        for(auto i : e.globalname){
+            this->globalname.push_back(i);
+        }
+        for(auto i : e.globalexpr){
+            this->globalexpr.push_back(i);
+        }
+        for(auto i : e.BBName){
+            this->BBName.push_back(i);
+        }
+        for(auto i : e.BBCount){
+            this->BBCount.push_back(i);
+        }
+        for(auto i : e.blackList){
+            this->blackList.push_back(i);
+        }
+        for(auto i : e.isWhiteList){
+            this->isWhiteList.push_back(i);
+        }
     }
 
     Encode::~Encode() {
@@ -201,7 +227,7 @@ namespace klee {
 #endif
     }
 
-    void Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
+    int Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
                                  llvm::StringRef labelTrue, llvm::StringRef labelFalse) {
 
         path.push_back(isTrue);
@@ -214,7 +240,7 @@ namespace klee {
         if (brCond.is_bool()) {
             constraint = (brCond == brIsTrue);
         } else {
-            constraint = ((brCond >= 0) == brIsTrue);
+            constraint = ((brCond == 0) == brIsTrue);
         }
         constraintexpr.push_back(constraint);
 #if DEBUGINFO
@@ -244,6 +270,9 @@ namespace klee {
             std::cerr << path[i] << "\n";
         }
 #endif
+
+        checkBBCount(labelTrue);
+        return flag;
 
     }
 
@@ -279,7 +308,7 @@ namespace klee {
 
     void Encode::checkUseList(llvm::StringRef label) {
 
-        if (flag == whiteList.size()) {
+        if (whiteList.size() == flag) {
             for (unsigned i = 0; i < useList.size(); i++) {
 #if DEBUGINFO
                 llvm::errs() << "useList : " << useList[i] << "\n";
@@ -300,12 +329,12 @@ namespace klee {
                         std::cerr << "\n" << m << "\n";
 #endif
                         json["find"] = "Yes";
+
                         std::stringstream ss;
                         ss.str("");
-                        for (unsigned int i = 0; i < path.size(); i++) {
-                            ss << path[i];
+                        for (unsigned int i = 0; i < path_name.size(); i++) {
+                            json["path"][i] = path_name[i];
                         }
-                        json["path"] = ss.str();
 
                         for (unsigned int i = 0; i < globalexpr.size(); i++) {
                             ss.str("");
@@ -383,7 +412,7 @@ namespace klee {
                         } else {
                             flag = 0;
                         }
-                        std::ofstream out_file("confirm_result.txt",
+                        std::ofstream out_file("confirm_result.json",
                                                std::ios_base::out | std::ios_base::app);
                         out_file << json.dump() << "\n";
                         out_file.close();
@@ -415,7 +444,7 @@ namespace klee {
             if (BBName.at(i) == label.str()) {
                 BBCount.at(i)++;
                 if (BBCount.at(i) >= 3) {
-                    flag = -1;
+                    flag = -2;
                 }
                 break;
             }
@@ -432,6 +461,13 @@ namespace klee {
         }
 #endif
 
+        if(flag == -2) {
+            json["priority"] ="symbolic condition loop";
+            std::ofstream out_file("confirm_result.json",
+                                   std::ios_base::out | std::ios_base::app);
+            out_file << json.dump() << "\n";
+            out_file.close();
+        }
     }
 
     std::string Encode::getName(ref<klee::Expr> value) {
@@ -480,8 +516,16 @@ namespace klee {
         checkWhiteList(label);
         checkBlackList(label);
         checkUseList(label);
-        checkBBCount(label);
+//        checkBBCount(label);
         return flag;
+    }
+
+    void Encode::addpath(std::string p) {
+        this->path_name.push_back(p);
+#if DEBUGINFO
+        std::cerr << "addpath path_name : " << &this->path_name << "\n";
+        std::cerr << "addpath : " << p << "\n";
+#endif
     }
 
 }
