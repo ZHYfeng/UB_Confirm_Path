@@ -3091,7 +3091,6 @@ void Executor::terminateState(ExecutionState &state) {
             std::find(addedStates.begin(), addedStates.end(), &state);
     if (it == addedStates.end()) {
         state.pc = state.prevPC;
-        std::cerr << "terminateState remove ExecutionState : " << &state << "\n";
         removedStates.push_back(&state);
     } else {
         // never reached searcher, just delete immediately
@@ -3722,9 +3721,10 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                         }
                     }
                 }
+#if DEBUGINFO
                 std::cerr << "3724 type : " << type << "\n";
+#endif
                 ref<Expr> result = os->read(offset, type);
-
                 if (interpreterOpts.MakeConcreteSymbolic)
                     result = replaceReadWithSymbolic(state, result);
 

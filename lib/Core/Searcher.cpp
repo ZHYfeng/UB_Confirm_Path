@@ -251,7 +251,6 @@ void WeightedRandomSearcher::update(
   for (std::vector<ExecutionState *>::const_iterator it = removedStates.begin(),
                                                      ie = removedStates.end();
        it != ie; ++it) {
-      std::cerr << "remove ExecutionState : " << *it << "\n";
     states->remove(*it);
   }
 }
