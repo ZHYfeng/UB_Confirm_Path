@@ -196,7 +196,7 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
             //convert to boolean value, that means the result
             //depends on the ExtractExpr's least significant
             //bytes.
-            if (ee->width == Expr::Bool) {
+            if (0 && ee->width == Expr::Bool) {
                 //handle int->bool the special
 #if INT_ARITHMETIC
                 res = z3::ite(src, z3_ctx.int_val(1), z3_ctx.int_val(0));
@@ -218,7 +218,7 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
             CastExpr *ce = cast<CastExpr>(ele);
             z3::expr src = eachExprToZ3(ce->src);
 
-            if (ce->src.get()->getWidth() == Expr::Bool) {
+            if (0 && ce->src.get()->getWidth() == Expr::Bool) {
 #if INT_ARITHMETIC
                 res = z3::ite(src, z3_ctx.int_val(1), z3_ctx.int_val(0));
 #else
@@ -236,7 +236,7 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
                 res = src;
             }
 #if DEBUGINFO
-            std::cerr << "case Expr::ZExt: " << res << std::endl;
+            std::cerr << "case Expr::ZExt: " << res << " ce->width : " << ce->width << std::endl;
 #endif
             return res;
         }
@@ -244,7 +244,7 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
         case Expr::SExt: {
             CastExpr *ce = cast<CastExpr>(ele);
             z3::expr src = eachExprToZ3(ce->src);
-            if (ce->src.get()->getWidth() == Expr::Bool
+            if (0 && ce->src.get()->getWidth() == Expr::Bool
                 && ce->width != Expr::Bool) {
 #if INT_ARITHMETIC
                 res = z3::ite(src, z3_ctx.int_val(1), z3_ctx.int_val(0));
