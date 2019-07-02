@@ -36,8 +36,9 @@ namespace klee {
     }
 
     Encode::Encode(const Encode &e) :
-            z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), flag(e.flag), Json(e.Json), whiteList(
+            z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), flag(e.flag), whiteList(
             e.whiteList), blackList(e.blackList), useList(e.useList) {
+        Json = e.Json;
         json = nlohmann::json::parse(Json);
         for(auto i : e.constraintexpr){
             this->constraintexpr.push_back(i);
@@ -416,6 +417,7 @@ namespace klee {
                                                std::ios_base::out | std::ios_base::app);
                         out_file << json.dump() << "\n";
                         out_file.close();
+                        std::cerr << json.dump() << "\n";
                     } else if (result == z3::unknown) {
 
                     } else if (result == z3::unsat) {
