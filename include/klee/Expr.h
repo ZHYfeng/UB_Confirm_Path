@@ -24,7 +24,7 @@
 #include <vector>
 #include <map>
 
-#define DEBUGINFO 0
+#define DEBUGINFO 1
 
 namespace llvm {
   class Type;
