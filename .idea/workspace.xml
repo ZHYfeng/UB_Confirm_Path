@@ -3,18 +3,18 @@
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
       <config projectName="KLEE" targetName="kleeSupport" />
-      <config projectName="KLEE" targetName="clean_doxygen" />
       <config projectName="KLEE" targetName="kleeBasic" />
+      <config projectName="KLEE" targetName="clean_doxygen" />
       <config projectName="KLEE" targetName="kleaverSolver" />
       <config projectName="KLEE" targetName="gen-random-bout" />
       <config projectName="KLEE" targetName="kleeModule" />
       <config projectName="KLEE" targetName="kleeRuntest" />
-      <config projectName="KLEE" targetName="doc-doxygen" />
+      <config projectName="KLEE" targetName="klee-replay" />
       <config projectName="KLEE" targetName="docs" />
       <config projectName="KLEE" targetName="kleeEncode" />
       <config projectName="KLEE" targetName="clean_all" />
+      <config projectName="KLEE" targetName="doc-doxygen" />
       <config projectName="KLEE" targetName="BuildKLEERuntimes" />
-      <config projectName="KLEE" targetName="klee-replay" />
       <config projectName="KLEE" targetName="clean_runtime" />
       <config projectName="KLEE" targetName="kleeCore" />
       <config projectName="KLEE" targetName="gen-bout" />
@@ -35,10 +35,9 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a4bf26a7-50f6-4b04-9fdd-f4853644789c" name="Default Changelist" comment="fix: solve some string warning">
+    <list default="true" id="a4bf26a7-50f6-4b04-9fdd-f4853644789c" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/klee/Expr.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/klee/Expr.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/Encode/KQuery2Z3.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/Encode/KQuery2Z3.cpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/build/" />
@@ -74,7 +73,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/lib/Core/Executor.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="17">
+            <state relative-caret-position="63342">
               <caret line="3726" column="58" selection-start-line="3726" selection-start-column="58" selection-end-line="3726" selection-end-column="58" />
               <folding>
                 <element signature="e#2468#2486#0" expanded="true" />
@@ -96,13 +95,13 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/lib/Encode/KQuery2Z3.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="344">
-              <caret line="254" column="25" lean-forward="true" selection-start-line="254" selection-start-column="25" selection-end-line="254" selection-end-column="25" />
+            <state relative-caret-position="408">
+              <caret line="123" column="10" selection-start-line="123" selection-start-column="10" selection-end-line="123" selection-end-column="10" />
               <folding>
-                <element signature="e#6455#6512#0" expanded="true" />
+                <element signature="e#155#177#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -111,7 +110,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file:///usr/include/z3++.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="30804">
+            <state relative-caret-position="36142">
               <caret line="2126" column="36" selection-start-line="2126" selection-start-column="32" selection-end-line="2126" selection-end-column="36" />
             </state>
           </provider>
@@ -135,11 +134,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/include/klee/Expr.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="194">
-              <caret line="845" column="13" selection-start-line="845" selection-start-column="8" selection-end-line="845" selection-end-column="13" />
+            <state relative-caret-position="238">
+              <caret line="26" column="19" selection-start-line="26" selection-start-column="19" selection-end-line="26" selection-end-column="19" />
             </state>
           </provider>
         </entry>
@@ -192,8 +191,20 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/lib/Encode/Encode.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4114">
-              <caret line="242" column="35" selection-start-line="242" selection-start-column="35" selection-end-line="242" selection-end-column="35" />
+            <state relative-caret-position="5542">
+              <caret line="326" column="42" selection-start-line="326" selection-start-column="42" selection-end-line="326" selection-end-column="42" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/result/main_remote.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="323">
+              <caret line="19" column="92" selection-start-line="19" selection-start-column="92" selection-end-line="19" selection-end-column="92" />
+              <folding>
+                <element signature="e#18#32#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -232,7 +243,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>labelTrue</find>
       <find>termi</find>
       <find>memory error: out of bound pointer</find>
       <find>executeInstruction</find>
@@ -262,6 +272,7 @@
       <find>extract</find>
       <find>Extract</find>
       <find>null</find>
+      <find>useList :</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -274,33 +285,32 @@
         <option value="$PROJECT_DIR$/lib/Core/Memory.h" />
         <option value="$PROJECT_DIR$/result/Usage.md" />
         <option value="$PROJECT_DIR$/result/main.py" />
-        <option value="$PROJECT_DIR$/result/main_remote.py" />
         <option value="$PROJECT_DIR$/lib/Encode/Symbolic.h" />
         <option value="$PROJECT_DIR$/lib/Encode/KQuery2Z3.h" />
         <option value="$PROJECT_DIR$/lib/Encode/Encode.h" />
         <option value="$PROJECT_DIR$/include/klee/Internal/ADT/DiscretePDF.inc" />
-        <option value="$PROJECT_DIR$/lib/Encode/Encode.cpp" />
         <option value="$PROJECT_DIR$/lib/Core/Memory.cpp" />
         <option value="$PROJECT_DIR$/lib/Core/Searcher.cpp" />
         <option value="$PROJECT_DIR$/tools/klee/main.cpp" />
         <option value="$PROJECT_DIR$/lib/Core/Executor.cpp" />
-        <option value="$PROJECT_DIR$/include/klee/Expr.h" />
         <option value="$PROJECT_DIR$/lib/Encode/KQuery2Z3.cpp" />
+        <option value="$PROJECT_DIR$/lib/Encode/Encode.cpp" />
+        <option value="$PROJECT_DIR$/result/main_remote.py" />
+        <option value="$PROJECT_DIR$/include/klee/Expr.h" />
       </list>
     </option>
   </component>
   <component name="OCFindUsagesOptions" text="true" ivars="false" properties="true" derivedClasses="false" />
-  <component name="ProjectFrameBounds" extendedState="2">
-    <option name="y" value="23" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="1920" />
     <option name="width" value="1920" />
-    <option name="height" value="1044" />
+    <option name="height" value="1048" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -322,6 +332,11 @@
             <path>
               <item name="KLEE" type="b2602c69:ProjectViewProjectNode" />
               <item name="2018_klee_confirm_path" type="462c0819:PsiDirectoryNode" />
+              <item name="result" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="KLEE" type="b2602c69:ProjectViewProjectNode" />
+              <item name="2018_klee_confirm_path" type="462c0819:PsiDirectoryNode" />
               <item name="tools" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -334,6 +349,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -529,7 +545,10 @@
       <workItem from="1561659702887" duration="840000" />
       <workItem from="1561661520785" duration="187000" />
       <workItem from="1561674920832" duration="621000" />
-      <workItem from="1561938607600" duration="2480000" />
+      <workItem from="1561938607600" duration="2612000" />
+      <workItem from="1562004378361" duration="501000" />
+      <workItem from="1562018651001" duration="746000" />
+      <workItem from="1562091408306" duration="25000" />
     </task>
     <task id="LOCAL-00001" summary="..">
       <created>1545431595537</created>
@@ -643,11 +662,18 @@
       <option name="project" value="LOCAL" />
       <updated>1561661694146</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="fix: solve some string warning">
+      <created>1561941214086</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1561941214086</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="78269000" />
+    <option name="totallyTimeSpent" value="79673000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -659,10 +685,10 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="23" width="1920" height="1044" extended-state="2" />
+    <frame x="1920" y="0" width="1920" height="1048" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.4064516" visible="true" weight="0.18317358" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.4064516" visible="true" weight="0.124068156" />
       <window_info id="Favorites" order="1" sideWeight="0.5016129" side_tool="true" weight="0.15674494" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Run" order="1" weight="0.32944915" />
@@ -675,12 +701,12 @@
       <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="9" weight="0.32838982" />
       <window_info anchor="bottom" id="CMake" order="10" weight="0.20917822" />
-      <window_info active="true" anchor="bottom" id="Messages" order="11" visible="true" weight="0.3273305" />
+      <window_info anchor="bottom" id="Messages" order="11" visible="true" weight="0.3273305" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" visible="true" weight="0.24946581" />
       <window_info anchor="right" id="Database" order="3" weight="0.3298744" />
-      <window_info anchor="right" id="Structure" order="4" sideWeight="0.64379084" visible="true" weight="0.21299255" />
+      <window_info anchor="right" id="Structure" order="4" sideWeight="0.64379084" visible="true" weight="0.13897763" />
       <window_info anchor="right" x="2" y="326" width="1841" height="262" id="Find" order="5" sideWeight="0.35620916" weight="0.29326922" />
     </layout>
   </component>
@@ -757,13 +783,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="244">
           <caret line="81" column="40" lean-forward="true" selection-start-line="81" selection-start-column="40" selection-end-line="81" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/result/main_remote.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="20" column="22" lean-forward="true" selection-start-line="20" selection-start-column="22" selection-end-line="20" selection-end-column="22" />
         </state>
       </provider>
     </entry>
@@ -939,7 +958,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/Core/Executor.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="17">
+        <state relative-caret-position="63342">
           <caret line="3726" column="58" selection-start-line="3726" selection-start-column="58" selection-end-line="3726" selection-end-column="58" />
           <folding>
             <element signature="e#2468#2486#0" expanded="true" />
@@ -957,6 +976,13 @@
             <element signature="e#92869#92968#0" expanded="true" />
             <element signature="e#155188#155232#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/z3++.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="36142">
+          <caret line="2126" column="36" selection-start-line="2126" selection-start-column="32" selection-end-line="2126" selection-end-column="36" />
         </state>
       </provider>
     </entry>
@@ -1011,8 +1037,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/Encode/Encode.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4114">
-          <caret line="242" column="35" selection-start-line="242" selection-start-column="35" selection-end-line="242" selection-end-column="35" />
+        <state relative-caret-position="5542">
+          <caret line="326" column="42" selection-start-line="326" selection-start-column="42" selection-end-line="326" selection-end-column="42" />
         </state>
       </provider>
     </entry>
@@ -1040,27 +1066,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/include/klee/Expr.h">
+    <entry file="file://$PROJECT_DIR$/result/main_remote.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="194">
-          <caret line="845" column="13" selection-start-line="845" selection-start-column="8" selection-end-line="845" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/z3++.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30804">
-          <caret line="2126" column="36" selection-start-line="2126" selection-start-column="32" selection-end-line="2126" selection-end-column="36" />
+        <state relative-caret-position="323">
+          <caret line="19" column="92" selection-start-line="19" selection-start-column="92" selection-end-line="19" selection-end-column="92" />
+          <folding>
+            <element signature="e#18#32#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/Encode/KQuery2Z3.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="344">
-          <caret line="254" column="25" lean-forward="true" selection-start-line="254" selection-start-column="25" selection-end-line="254" selection-end-column="25" />
+        <state relative-caret-position="408">
+          <caret line="123" column="10" selection-start-line="123" selection-start-column="10" selection-end-line="123" selection-end-column="10" />
           <folding>
-            <element signature="e#6455#6512#0" expanded="true" />
+            <element signature="e#155#177#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/klee/Expr.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="238">
+          <caret line="26" column="19" selection-start-line="26" selection-start-column="19" selection-end-line="26" selection-end-column="19" />
         </state>
       </provider>
     </entry>
