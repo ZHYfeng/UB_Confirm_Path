@@ -35,7 +35,6 @@ klee_error_result_file_name = "error.json"
 linux_kernel_path_in_json = "/home"
 linux_kernel_path_in_this_pc = "/home"
 
-
 klee_right_result = "KLEE: done: generated tests ="
 
 
