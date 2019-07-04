@@ -40,34 +40,34 @@ namespace klee {
             e.whiteList), blackList(e.blackList), useList(e.useList) {
         Json = e.Json;
         json = nlohmann::json::parse(Json);
-        for(auto i : e.constraintexpr){
+        for (auto i : e.constraintexpr) {
             this->constraintexpr.push_back(i);
         }
-        for(auto i : e.constraintexpr){
+        for (auto i : e.constraintexpr) {
             this->constraintexpr.push_back(i);
         }
-        for(auto i : e.path_name){
+        for (auto i : e.path_name) {
             this->path_name.push_back(i);
         }
-        for(auto i : e.path){
+        for (auto i : e.path) {
             this->path.push_back(i);
         }
-        for(auto i : e.globalname){
+        for (auto i : e.globalname) {
             this->globalname.push_back(i);
         }
-        for(auto i : e.globalexpr){
+        for (auto i : e.globalexpr) {
             this->globalexpr.push_back(i);
         }
-        for(auto i : e.BBName){
+        for (auto i : e.BBName) {
             this->BBName.push_back(i);
         }
-        for(auto i : e.BBCount){
+        for (auto i : e.BBCount) {
             this->BBCount.push_back(i);
         }
-        for(auto i : e.blackList){
+        for (auto i : e.blackList) {
             this->blackList.push_back(i);
         }
-        for(auto i : e.isWhiteList){
+        for (auto i : e.isWhiteList) {
             this->isWhiteList.push_back(i);
         }
     }
@@ -229,7 +229,7 @@ namespace klee {
     }
 
     int Encode::addBrConstraint(ref<Expr> cond, bool isTrue,
-                                 llvm::StringRef labelTrue, llvm::StringRef labelFalse) {
+                                llvm::StringRef labelTrue, llvm::StringRef labelFalse) {
 
         path.push_back(isTrue);
         constraintExpr.push_back(cond);
@@ -309,7 +309,7 @@ namespace klee {
 
     void Encode::checkUseList(llvm::StringRef label) {
 
-        if (whiteList.size() == flag) {
+        if (whiteList.size() == flag - 1) {
             for (unsigned i = 0; i < useList.size(); i++) {
 #if DEBUGINFO
                 llvm::errs() << "useList : " << useList[i] << "\n";
@@ -463,8 +463,8 @@ namespace klee {
         }
 #endif
 
-        if(flag == -2) {
-            json["priority"] ="symbolic condition loop";
+        if (flag == -2) {
+            json["priority"] = "symbolic condition loop";
             std::ofstream out_file("confirm_result.json",
                                    std::ios_base::out | std::ios_base::app);
             out_file << json.dump() << "\n";

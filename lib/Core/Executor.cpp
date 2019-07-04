@@ -2986,16 +2986,6 @@ void Executor::run(ExecutionState &initialState) {
 
         checkMemoryUsage();
 
-        auto time2 = std::time(NULL);
-        if (time2 - time1 > 1800) {
-            state.encode.json["priority"] = "threshold";
-            std::ofstream out_file("confirm_result.json",
-                                   std::ios_base::out | std::ios_base::app);
-            out_file << state.encode.json.dump() << "\n";
-            out_file.close();
-            exit(0);
-        }
-
         updateStates(&state);
     }
 
