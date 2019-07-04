@@ -33,4 +33,4 @@ autoconf/aclocal.m4
 autoconf/autom4te.cache/
 autom4te.cache/
 
-workspace.xml
+/.idea/
