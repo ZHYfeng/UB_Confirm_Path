@@ -1,3 +1,3 @@
 ```shell
-python main_remote.py file.json | tee result.txt
+python main_remote.py file.json
 ```
