@@ -13,11 +13,11 @@ import time
 # memory_out_file_name: all link files and jsons of memory out
 # klee_result_file_name: all jsons of klee
 # klee_log_file_name: all log of klee. I do not mv those log into one file.
+# klee_error_result_file_name: all json with error code
 
 # those variables need you change
-
 total_cpu = 6
-klee_path = "/home/yhao/git/2018_klee_confirm_path/build/bin/klee"
+klee_path = "/home/yhao/git/2018_klee_confirm_path/cmake-build-debug/bin/klee"
 klee_log_file_name = "confirm_result.log"
 klee_result_file_name = "confirm_result.json"
 
@@ -175,8 +175,6 @@ class ProcessTimer:
             pass
 
         self.output, self.err = self.p.communicate()
-        print(self.output)
-        print(self.err)
 
         if not os.path.exists(self.path):
             os.makedirs(self.path)

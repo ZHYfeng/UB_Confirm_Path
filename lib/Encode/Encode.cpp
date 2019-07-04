@@ -309,7 +309,7 @@ namespace klee {
 
     void Encode::checkUseList(llvm::StringRef label) {
 
-        if (whiteList.size() == flag - 1) {
+        if (whiteList.size() == flag) {
             for (unsigned i = 0; i < useList.size(); i++) {
 #if DEBUGINFO
                 llvm::errs() << "useList : " << useList[i] << "\n";

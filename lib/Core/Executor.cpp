@@ -2975,8 +2975,6 @@ void Executor::run(ExecutionState &initialState) {
     std::vector<ExecutionState *> newStates(states.begin(), states.end());
     searcher->update(0, newStates, std::vector<ExecutionState *>());
 
-    auto time1 = std::time(NULL);
-
     while (!states.empty() && !haltExecution) {
         ExecutionState &state = searcher->selectState();
         KInstruction *ki = state.pc;
