@@ -36,8 +36,7 @@ namespace klee {
     }
 
     Encode::Encode(const Encode &e) :
-            z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), flag(e.flag), whiteList(
-            e.whiteList), blackList(e.blackList), useList(e.useList) {
+            z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), flag(e.flag) {
         Json = e.Json;
         json = nlohmann::json::parse(Json);
         for (auto i : e.constraintexpr) {
@@ -66,6 +65,12 @@ namespace klee {
         }
         for (auto i : e.blackList) {
             this->blackList.push_back(i);
+        }
+        for (auto i : e.useList) {
+            this->useList.push_back(i);
+        }
+        for (auto i : e.whiteList) {
+            this->whiteList.push_back(i);
         }
         for (auto i : e.isWhiteList) {
             this->isWhiteList.push_back(i);
