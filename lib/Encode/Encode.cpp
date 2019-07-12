@@ -42,9 +42,6 @@ namespace klee {
         for (auto i : e.constraintexpr) {
             this->constraintexpr.push_back(i);
         }
-        for (auto i : e.constraintexpr) {
-            this->constraintexpr.push_back(i);
-        }
         for (auto i : e.path_name) {
             this->path_name.push_back(i);
         }
