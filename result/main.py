@@ -5,6 +5,7 @@ import psutil
 import subprocess
 import time
 import multiprocessing
+import signal
 
 # usage
 # python main_remote.py file.json
@@ -17,13 +18,13 @@ import multiprocessing
 
 # those variables need you change
 
-total_cpu = multiprocessing.cpu_count() - 2
+total_cpu = multiprocessing.cpu_count() - 8
 klee_path = "/home/yhao/git/2018_klee_confirm_path/cmake-build-debug/bin/klee"
 klee_log_file_name = "confirm_result.log"
 klee_result_file_name = "confirm_result.json"
 
 schedule_time = 1  # second
-time_out = 18  # second
+time_out = 30  # second
 time_out_file_name = "time_out.json"
 
 # notice: for the reason that python can not kill the klee quickly, it is better to set this small.
@@ -79,7 +80,7 @@ class ProcessTimer:
         link_subprocess.wait()
 
         print(self.klee_cmd)
-        self.p = subprocess.Popen(self.klee_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        self.p = subprocess.Popen(self.klee_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
         self.execution_state = True
 
         os.chdir("../")
@@ -157,17 +158,21 @@ class ProcessTimer:
         try:
             pp = psutil.Process(self.p.pid)
             if kill:
+                os.killpg(os.getpgid(self.p.pid), signal.SIGKILL)
+                self.p.kill()
                 pp.kill()
             else:
+                os.killpg(os.getpgid(self.p.pid), signal.SIGTERM)
+                self.p.terminate()
                 pp.terminate()
         except psutil.NoSuchProcess:
             if self.p.returncode != right_return_code:
                 self.output_json(klee_error_result_file_name)
             pass
 
-        self.output, self.err = self.p.communicate()
+        #self.output, self.err = self.p.communicate()
         #print(self.output)
-        print(self.err)
+        #print(self.err)
 
         if not os.path.exists(self.path):
             os.makedirs(self.path)
