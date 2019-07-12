@@ -2279,12 +2279,12 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
             }
 
             base->dump();
-            std::cerr << kgepi->offset << std::endl;
+            std::cerr << "kgepi->offset : " << kgepi->offset << std::endl;
 
-            if (kgepi->offset)
-                base = AddExpr::create(base,
-                                       Expr::createPointer(kgepi->offset));
-
+            if (kgepi->offset) {
+                std::cerr << "kgepi->offset : " << kgepi->offset << std::endl;
+                base = AddExpr::create(base, Expr::createPointer(kgepi->offset));
+            }
 
             bindLocal(ki, state, base);
             break;
