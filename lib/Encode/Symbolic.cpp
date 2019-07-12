@@ -154,6 +154,18 @@ void Symbolic::load(ExecutionState &state, KInstruction *ki) {
 					executor->bindLocal(ki, state, symbolic);
 					state.encode.globalname.push_back(GlobalName);
 					state.encode.globalexpr.push_back(symbolic);
+				} else {
+                    Expr::Width size = executor->getWidthForLLVMType(
+                            ki->inst->getType());
+                    ref<Expr> value = executor->getDestCell(state, ki).value;
+                    ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+#if DEBUGINFO
+                    std::cerr << " load symbolic value : ";
+                    symbolic->dump();
+#endif
+                    executor->bindLocal(ki, state, symbolic);
+                    state.encode.globalname.push_back(GlobalName);
+                    state.encode.globalexpr.push_back(symbolic);
 				}
 			}
 		} else {

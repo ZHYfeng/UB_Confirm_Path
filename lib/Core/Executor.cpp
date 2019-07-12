@@ -2244,11 +2244,13 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 
         case Instruction::Load: {
             ref<Expr> base = eval(ki, 0, state).value;
-#if DEBUGINFO
-                                                                                                                                    std::cerr << "load base :";
-    base->dump();
-#endif
             executeMemoryOperation(state, false, base, 0, ki);
+#if DEBUGINFO
+            std::cerr << "load base :";
+            base->dump();
+            std::cerr << "load value :";
+            ;
+#endif
             break;
         }
         case Instruction::Store: {
@@ -2277,12 +2279,11 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                                        MulExpr::create(Expr::createSExtToPointerWidth(index),
                                                        Expr::createPointer(elementSize)));
             }
-
+#if DEBUGINFO
             base->dump();
             std::cerr << "kgepi->offset : " << kgepi->offset << std::endl;
-
+#endif
             if (kgepi->offset) {
-                std::cerr << "kgepi->offset : " << kgepi->offset << std::endl;
                 base = AddExpr::create(base, Expr::createPointer(kgepi->offset));
             }
 
