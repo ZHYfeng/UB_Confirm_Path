@@ -2277,11 +2277,14 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                                        MulExpr::create(Expr::createSExtToPointerWidth(index),
                                                        Expr::createPointer(elementSize)));
             }
+
+            base->dump();
+            std::cerr << kgepi->offset << std::endl;
+
             if (kgepi->offset)
                 base = AddExpr::create(base,
                                        Expr::createPointer(kgepi->offset));
-            base->dump();
-            std::cerr << kgepi->offset << std::endl;
+
 
             bindLocal(ki, state, base);
             break;
