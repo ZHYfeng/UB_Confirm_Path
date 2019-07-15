@@ -151,24 +151,32 @@ class ProcessTimer:
         self.t1 = time.time()
         return False
 
-    def close(self, kill=True):
+    def close(self):
         if self.initd == False:
             return
 
         try:
             pp = psutil.Process(self.p.pid)
-            if kill:
-                os.killpg(os.getpgid(self.p.pid), signal.SIGKILL)
-                self.p.kill()
-                pp.kill()
-            else:
-                os.killpg(os.getpgid(self.p.pid), signal.SIGTERM)
-                self.p.terminate()
-                pp.terminate()
+            descendants = list(pp.children(recursive=True))
+            descendants = descendants + [pp]
+            for descendant in descendants:
+                try:
+                    descendant.kill()
+                    descendant.kill()
+                    descendant.terminate()
+                    descendant.terminate()
+                except psutil.NoSuchProcess:
+                    if self.p.returncode != right_return_code:
+                        self.output_json(klee_error_result_file_name)
+
+            os.killpg(os.getpgid(self.p.pid), signal.SIGKILL)
+            os.killpg(os.getpgid(self.p.pid), signal.SIGKILL)
+            os.killpg(os.getpgid(self.p.pid), signal.SIGTERM)
+            os.killpg(os.getpgid(self.p.pid), signal.SIGTERM)
+
         except psutil.NoSuchProcess:
             if self.p.returncode != right_return_code:
                 self.output_json(klee_error_result_file_name)
-            pass
 
         #self.output, self.err = self.p.communicate()
         #print(self.output)
