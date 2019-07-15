@@ -24,7 +24,7 @@ klee_log_file_name = "confirm_result.log"
 klee_result_file_name = "confirm_result.json"
 
 schedule_time = 1  # second
-time_out = 30  # second
+time_out = 60  # second
 time_out_file_name = "time_out.json"
 
 # notice: for the reason that python can not kill the klee quickly, it is better to set this small.
@@ -45,6 +45,7 @@ class ProcessTimer:
     def __init__(self):
         self.initd = False
         self.execution_state = False
+        self.islink = False
 
     def init(self, path, link_file, json):
         self.initd = True
@@ -66,6 +67,17 @@ class ProcessTimer:
         self.klee_cmd = klee_cmd
         self.execution_state = False
 
+    def link(self):
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
+        os.chdir(self.path)
+        self.islink = True
+        self.execution_state = True
+
+        print(self.link_cmd)
+        self.p = subprocess.Popen(self.link_cmd, shell=True)
+        os.chdir("../")
+
     def execute(self):
         self.max_vms_memory = 0
         self.max_rss_memory = 0
@@ -75,63 +87,66 @@ class ProcessTimer:
         if not os.path.exists(self.path):
             os.makedirs(self.path)
         os.chdir(self.path)
-
-        link_subprocess = subprocess.Popen(self.link_cmd, shell=True)
-        link_subprocess.wait()
+        self.islink = False
+        self.execution_state = True
 
         print(self.klee_cmd)
         self.p = subprocess.Popen(self.klee_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
-        self.execution_state = True
-
         os.chdir("../")
 
     def poll(self):
-        if not self.check_execution_state():
-            return False
-        self.t1 = time.time()
-        try:
-            pp = psutil.Process(self.p.pid)
+        if self.islink:
+            if not self.check_execution_state():
+                self.execute()
+                return self.check_execution_state()
+        else:
 
-            # obtain a list of the subprocess and all its descendants
-            descendants = list(pp.children(recursive=True))
-            descendants = descendants + [pp]
+            if not self.check_execution_state():
+                return False
+            self.t1 = time.time()
+            try:
+                pp = psutil.Process(self.p.pid)
 
-            rss_memory = 0
-            vms_memory = 0
+                # obtain a list of the subprocess and all its descendants
+                descendants = list(pp.children(recursive=True))
+                descendants = descendants + [pp]
 
-            # calculate and sum up the memory of the subprocess and all its descendants
-            for descendant in descendants:
-                try:
-                    mem_info = descendant.memory_info()
+                rss_memory = 0
+                vms_memory = 0
 
-                    rss_memory += mem_info[0]
-                    vms_memory += mem_info[1]
-                except psutil.NoSuchProcess:
-                    # sometimes a subprocess descendant will have terminated between the time
-                    # we obtain a list of descendants, and the time we actually poll this
-                    # descendant's memory usage.
-                    pass
-            self.max_vms_memory = max(self.max_vms_memory, vms_memory)
-            self.max_rss_memory = max(self.max_rss_memory, rss_memory)
+                # calculate and sum up the memory of the subprocess and all its descendants
+                for descendant in descendants:
+                    try:
+                        mem_info = descendant.memory_info()
 
-            if self.t1 - self.t0 > time_out:
-                print("time out : ")
-                print(self.t1- self.t0)
-                self.close()
-                self.output_json(time_out_file_name)
+                        rss_memory += mem_info[0]
+                        vms_memory += mem_info[1]
+                    except psutil.NoSuchProcess:
+                        # sometimes a subprocess descendant will have terminated between the time
+                        # we obtain a list of descendants, and the time we actually poll this
+                        # descendant's memory usage.
+                        pass
+                self.max_vms_memory = max(self.max_vms_memory, vms_memory)
+                self.max_rss_memory = max(self.max_rss_memory, rss_memory)
+
+                if self.t1 - self.t0 > time_out:
+                    print("time out : ")
+                    print(self.t1- self.t0)
+                    self.close()
+                    self.output_json(time_out_file_name)
+                    return self.check_execution_state()
+
+                if self.max_vms_memory > memory_out:
+                    print("memory out : ")
+                    print(self.max_vms_memory)
+                    self.close()
+                    self.output_json(memory_out_file_name)
+                    return self.check_execution_state()
+
+            except psutil.NoSuchProcess:
                 return self.check_execution_state()
 
-            if self.max_vms_memory > memory_out:
-                print("memory out : ")
-                print(self.max_vms_memory)
-                self.close()
-                self.output_json(memory_out_file_name)
-                return self.check_execution_state()
-
-        except psutil.NoSuchProcess:
             return self.check_execution_state()
-
-        return self.check_execution_state()
 
     def is_running(self):
         return psutil.pid_exists(self.p.pid) and self.p.poll() is None
@@ -197,7 +212,7 @@ tasks = [ProcessTimer() for i in range(total_cpu)]
 
 
 def run_next_json(index, link_file, json):
-    while tasks[index].check_execution_state():
+    while tasks[index].check_execution_state() or tasks[index].islink:
         tasks[index].poll()
         index = index + 1
         if index >= total_cpu:
@@ -207,7 +222,7 @@ def run_next_json(index, link_file, json):
     tasks[index].close()
     path = str(index)
     tasks[index].init(path, link_file, json)
-    tasks[index].execute()
+    tasks[index].link()
     return index
 
 
