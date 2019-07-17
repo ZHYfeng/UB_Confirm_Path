@@ -33,7 +33,7 @@ memory_out_file_name = "memory_out.json"
 
 right_return_code = 0
 klee_error_result_file_name = "error.json"
-
+klee_right_result_file_name = "tested.json"
 # if you need change the path in link file
 linux_kernel_path_in_json = "/home"
 linux_kernel_path_in_this_pc = "/home"
@@ -183,15 +183,19 @@ class ProcessTimer:
                 except psutil.NoSuchProcess:
                     if self.p.returncode != right_return_code:
                         self.output_json(klee_error_result_file_name)
+                    else:
+                        self.output_json(klee_right_result_file_name)
 
-            os.killpg(os.getpgid(self.p.pid), signal.SIGKILL)
-            os.killpg(os.getpgid(self.p.pid), signal.SIGKILL)
-            os.killpg(os.getpgid(self.p.pid), signal.SIGTERM)
-            os.killpg(os.getpgid(self.p.pid), signal.SIGTERM)
+            # os.killpg(os.getpgid(self.p.pid), signal.SIGKILL)
+            # os.killpg(os.getpgid(self.p.pid), signal.SIGKILL)
+            # os.killpg(os.getpgid(self.p.pid), signal.SIGTERM)
+            # os.killpg(os.getpgid(self.p.pid), signal.SIGTERM)
 
         except psutil.NoSuchProcess:
             if self.p.returncode != right_return_code:
                 self.output_json(klee_error_result_file_name)
+            else:
+                self.output_json(klee_right_result_file_name)
 
         #self.output, self.err = self.p.communicate()
         #print(self.output)
