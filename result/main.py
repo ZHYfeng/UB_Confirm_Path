@@ -23,6 +23,8 @@ klee_path = "/home/yhao/git/2018_klee_confirm_path/cmake-build-debug/bin/klee"
 klee_log_file_name = "confirm_result.log"
 klee_result_file_name = "confirm_result.json"
 
+log_file_name = "log.json"
+
 schedule_time = 1  # second
 time_out = 60  # second
 time_out_file_name = "time_out.json"
@@ -74,7 +76,6 @@ class ProcessTimer:
         self.islink = True
         self.execution_state = True
 
-        print(self.link_cmd)
         self.p = subprocess.Popen(self.link_cmd, shell=True)
         os.chdir("../")
 
@@ -90,7 +91,6 @@ class ProcessTimer:
         self.islink = False
         self.execution_state = True
 
-        print(self.klee_cmd)
         self.p = subprocess.Popen(self.klee_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
         os.chdir("../")
 
@@ -130,15 +130,11 @@ class ProcessTimer:
                 self.max_rss_memory = max(self.max_rss_memory, rss_memory)
 
                 if self.t1 - self.t0 > time_out:
-                    print("time out : ")
-                    print(self.t1- self.t0)
                     self.close()
                     self.output_json(time_out_file_name)
                     return self.check_execution_state()
 
                 if self.max_vms_memory > memory_out:
-                    print("memory out : ")
-                    print(self.max_vms_memory)
                     self.close()
                     self.output_json(memory_out_file_name)
                     return self.check_execution_state()
@@ -152,7 +148,7 @@ class ProcessTimer:
         return psutil.pid_exists(self.p.pid) and self.p.poll() is None
 
     def output_json(self, file_name):
-        f = open(self.path + "/" +file_name, "a")
+        f = open("./" +file_name, "a")
         f.write(self.link_file)
         f.write(self.json + "\n")
         f.close()
@@ -164,6 +160,8 @@ class ProcessTimer:
             return True
         self.execution_state = False
         self.t1 = time.time()
+        if not self.islink:
+            self.output_json(klee_right_result_file_name)
         return False
 
     def close(self):
@@ -183,8 +181,6 @@ class ProcessTimer:
                 except psutil.NoSuchProcess:
                     if self.p.returncode != right_return_code:
                         self.output_json(klee_error_result_file_name)
-                    else:
-                        self.output_json(klee_right_result_file_name)
 
             # os.killpg(os.getpgid(self.p.pid), signal.SIGKILL)
             # os.killpg(os.getpgid(self.p.pid), signal.SIGKILL)
@@ -194,13 +190,11 @@ class ProcessTimer:
         except psutil.NoSuchProcess:
             if self.p.returncode != right_return_code:
                 self.output_json(klee_error_result_file_name)
-            else:
-                self.output_json(klee_right_result_file_name)
 
         #self.output, self.err = self.p.communicate()
         #print(self.output)
         #print(self.err)
-
+        self.output_json(log_file_name)
         if not os.path.exists(self.path):
             os.makedirs(self.path)
         os.chdir(self.path)
@@ -214,6 +208,11 @@ class ProcessTimer:
 
 tasks = [ProcessTimer() for i in range(total_cpu)]
 
+
+def output_log(s):
+    f = open("./" +log_file_name, "a")
+    f.write(s)
+    f.close()
 
 def run_next_json(index, link_file, json):
     while tasks[index].check_execution_state() or tasks[index].islink:
@@ -262,8 +261,8 @@ def main():
         rm_subprocess = subprocess.Popen(rm_cmd, shell=True)
         rm_subprocess.wait()
 
-    rm_cmd = "rm -rf ./" + klee_result_file_name + " ./" + time_out_file_name
-    rm_cmd = rm_cmd + " ./" + memory_out_file_name + " ./" + klee_error_result_file_name
+    rm_cmd = "rm -rf ./" + klee_result_file_name + " ./" + time_out_file_name + " ./" + klee_right_result_file_name
+    rm_cmd = rm_cmd + " ./" + memory_out_file_name + " ./" + klee_error_result_file_name + " ./" + log_file_name
     rm_subprocess = subprocess.Popen(rm_cmd, shell=True)
     rm_subprocess.wait()
 
@@ -278,15 +277,14 @@ def main():
         link_file = line
         json = file.readline()
         index = run_next_json(index, link_file, json)
-        print("json index : " + str(json_index) + " path : " + str(index))
         line = file.readline()
 
     wait_all_json()
 
-    read_all_json(klee_result_file_name)
-    read_all_json(time_out_file_name)
-    read_all_json(memory_out_file_name)
-    read_all_json(klee_error_result_file_name)
+    # read_all_json(klee_result_file_name)
+    # read_all_json(time_out_file_name)
+    # read_all_json(memory_out_file_name)
+    # read_all_json(klee_error_result_file_name)
 
 
 if __name__ == "__main__":
