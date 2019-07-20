@@ -281,7 +281,7 @@ def main():
 
     wait_all_json()
 
-    # read_all_json(klee_result_file_name)
+    read_all_json(klee_result_file_name)
     # read_all_json(time_out_file_name)
     # read_all_json(memory_out_file_name)
     # read_all_json(klee_error_result_file_name)
