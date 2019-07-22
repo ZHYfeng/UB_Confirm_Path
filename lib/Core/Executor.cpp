@@ -2239,6 +2239,12 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                 size = MulExpr::create(size, count);
             }
             executeAlloc(state, size, true, ki);
+            if(ai->getAllocatedType()->getTypeID() == Type::IntegerTyID) {
+
+            } else if (ai->getAllocatedType()->getTypeID() == Type::ArrayTyID){
+
+            }
+            getDestCell(state, ki).value
             break;
         }
 
