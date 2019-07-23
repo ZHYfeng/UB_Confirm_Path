@@ -26,7 +26,7 @@ klee_result_file_name = "confirm_result.json"
 log_file_name = "log.json"
 
 schedule_time = 1  # second
-time_out = 60  # second
+time_out = 600  # second
 time_out_file_name = "time_out.json"
 
 # notice: for the reason that python can not kill the klee quickly, it is better to set this small.
@@ -75,7 +75,7 @@ class ProcessTimer:
         os.chdir(self.path)
         self.islink = True
         self.execution_state = True
-
+        # print(self.link_cmd)
         self.p = subprocess.Popen(self.link_cmd, shell=True)
         os.chdir("../")
 
@@ -90,8 +90,9 @@ class ProcessTimer:
         os.chdir(self.path)
         self.islink = False
         self.execution_state = True
-
-        self.p = subprocess.Popen(self.klee_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+        # print(self.klee_cmd)
+        self.p = subprocess.Popen(self.klee_cmd, shell=True, preexec_fn=os.setsid)
+        # self.p = subprocess.Popen(self.klee_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
         os.chdir("../")
 
     def poll(self):
@@ -99,11 +100,16 @@ class ProcessTimer:
             if not self.check_execution_state():
                 self.execute()
                 return self.check_execution_state()
-        else:
+            else:
+                return True
 
+        else:
             if not self.check_execution_state():
                 return False
             self.t1 = time.time()
+            self.output, self.err = self.p.communicate()
+            # print(self.output)
+            # print(self.err)
             try:
                 pp = psutil.Process(self.p.pid)
 
@@ -198,9 +204,9 @@ class ProcessTimer:
         if not os.path.exists(self.path):
             os.makedirs(self.path)
         os.chdir(self.path)
-        rm_cmd = "rm -rf klee-*"
-        rm_subprocess = subprocess.Popen(rm_cmd, shell=True)
-        rm_subprocess.wait()
+        # rm_cmd = "rm -rf klee-*"
+        # rm_subprocess = subprocess.Popen(rm_cmd, shell=True)
+        # rm_subprocess.wait()
         os.chdir("../")
 
         self.initd = False
@@ -234,9 +240,9 @@ def wait_all_json():
     while check:
         check = False
         for i in range(total_cpu):
-            if tasks[i].check_execution_state():
-                check = True
+            if tasks[i].poll():
                 tasks[i].poll()
+                check = True
         time.sleep(schedule_time)
 
     for i in range(total_cpu):
