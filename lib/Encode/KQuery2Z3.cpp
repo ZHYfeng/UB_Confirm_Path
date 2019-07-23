@@ -497,12 +497,20 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
 //			assert(
 //					Z3_get_sort_kind(z3_ctx, left)
 //							&& "sort between left and right are different in Expr::Eq\n");
-//			std::cerr << "right = " << right << std::endl;
 //			std::cerr << "ee left = " << ee->left << std::endl;
 //			std::cerr << "ee right = " << ee->right << std::endl;
+
+
 //			std::cerr << "left = " << left << ", left sort = " << left.get_sort() << std::endl;
 //			std::cerr << "right = " << right << ", right sort = " << right.get_sort() << std::endl;
             res = (left == right);
+//
+//            std::cerr << "res = " << res << " sort : " << res.get_sort() << std::endl;
+
+            if(res.get_sort()){
+            } else {
+                res = z3_ctx.bool_val(false);
+            }
 
             return res;
         }
