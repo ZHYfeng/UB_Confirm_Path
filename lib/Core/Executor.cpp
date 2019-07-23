@@ -2244,7 +2244,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
             } else if (ai->getAllocatedType()->getTypeID() == Type::ArrayTyID){
 
             }
-            getDestCell(state, ki).value
+//            getDestCell(state, ki).value
             break;
         }
 
