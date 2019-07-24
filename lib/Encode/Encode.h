@@ -7,7 +7,7 @@
 
 #ifndef LIB_ENCODE_ENCODE_H_
 #define LIB_ENCODE_ENCODE_H_
-
+#include "llvm/IR/BasicBlock.h"
 #include <llvm/ADT/StringRef.h>
 #include <z3++.h>
 #include <map>
@@ -48,6 +48,9 @@ public:
 	std::vector<int> BBCount;
 	std::vector<int> isWhiteList;
     nlohmann::json json;
+    bool ckeck;
+    std::string warning;
+
 
 public:
 	void addList();
@@ -55,14 +58,15 @@ public:
 			llvm::StringRef labelFalse);
 	void checkWhiteList(llvm::StringRef label);
 	void checkBlackList(llvm::StringRef label);
-	void checkUseList(llvm::StringRef label);
+	void checkUseList(llvm::BasicBlock *bb);
 	void checkBBCount(llvm::StringRef label);
-	int checkList(llvm::StringRef label);
+    int checkList(llvm::BasicBlock *bb);
 	static std::string getName(ref<Expr> value);
 	static std::string getSymbolicName(ref<Expr> value);
 	static void resolveSymbolicExpr(ref<Expr> value,
 			std::set<std::string> &relatedSymbolicExpr);
 	void addpath(std::string p);
+	void optput();
 };
 
 }

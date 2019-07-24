@@ -25,245 +25,408 @@
 
 namespace klee {
 
-Symbolic::Symbolic(Executor *executor) {
-	// TODO Auto-generated constructor stub
-	this->executor = executor;
-}
+    Symbolic::Symbolic(Executor *executor) {
+        // TODO Auto-generated constructor stub
+        this->executor = executor;
+    }
 
-Symbolic::~Symbolic() {
-	// TODO Auto-generated destructor stub
-}
+    Symbolic::~Symbolic() {
+        // TODO Auto-generated destructor stub
+    }
 
-ref<Expr> Symbolic::manualMakeSymbolic(std::string name, unsigned int size) {
-	//添加新的符号变量
-	const Array *array = new Array(name, size);
-	ObjectState *os = new ObjectState(size, array);
-	ref<Expr> offset = ConstantExpr::create(0, BIT_WIDTH);
-	ref<Expr> result = os->read(offset, size);
+    ref<Expr> Symbolic::manualMakeSymbolic(std::string name, unsigned int size) {
 #if DEBUGINFO
-	llvm::errs() << "make symboic:" << name << "\n";
-	llvm::errs() << "result : ";
-	result->dump();
+        llvm::errs() << "manualMakeSymbolic size :" << size << "\n";
 #endif
-	return result;
-}
-
-std::string Symbolic::createGlobalVarFullName(std::string i, unsigned memoryId,
-		uint64_t address, bool isGlobal, unsigned time, bool isStore) {
-	char signal;
-	ss.str("");
-	ss << i;
-	if (isGlobal) {
-		signal = 'G';
-	} else {
-		signal = 'L';
-	}
-	ss << signal;
-	ss << memoryId;
-	ss << '_';
-	ss << address;
-	if (isStore) {
-		signal = 'S';
-	} else {
-		signal = 'L';
-	}
-	ss << signal;
-	ss << time;
+        //添加新的符号变量
+        const Array *array = new Array(name, size);
+        ObjectState *os = new ObjectState(size, array);
+        ref<Expr> offset = ConstantExpr::create(0, BIT_WIDTH);
+        ref<Expr> result = os->read(offset, size);
 #if DEBUGINFO
-	llvm::errs() << "createGlobalVarFullName : " << ss.str() << "\n";
+        llvm::errs() << "make symboic:" << name << "\n";
+        llvm::errs() << "result : ";
+        result->dump();
 #endif
-	return ss.str();
-}
+        return result;
+    }
 
-unsigned Symbolic::getLoadTime(uint64_t address) {
-	unsigned loadTime;
-	std::map<uint64_t, unsigned>::iterator index = loadRecord.find(address);
-	if (index == loadRecord.end()) {
-		loadRecord.insert(std::make_pair(address, 1));
-		loadTime = 1;
-	} else {
-		loadTime = index->second + 1;
-		loadRecord[address] = loadTime;
-	}
-	return loadTime;
-}
-
-unsigned Symbolic::getStoreTime(uint64_t address) {
-	unsigned storeTime;
-	std::map<uint64_t, unsigned>::iterator index = storeRecord.find(address);
-	if (index == storeRecord.end()) {
-		storeRecord.insert(std::make_pair(address, 1));
-		storeTime = 1;
-	} else {
-		storeTime = index->second + 1;
-		storeRecord[address] = storeTime;
-	}
-	return storeTime;
-}
-
-void Symbolic::load(ExecutionState &state, KInstruction *ki) {
-	std::string GlobalName;
-	bool isGlobal;
-
-	Type::TypeID id = ki->inst->getType()->getTypeID();
-	ref<Expr> address = executor->eval(ki, 0, state).value;
-	ObjectPair op;
+    std::string Symbolic::createGlobalVarFullName(std::string i, unsigned memoryId,
+                                                  uint64_t address, bool isGlobal, unsigned time, bool isStore) {
+        char signal;
+        ss.str("");
+        ss << i;
+        if (isGlobal) {
+            signal = 'G';
+        } else {
+            signal = 'L';
+        }
+        ss << signal;
+        ss << memoryId;
+        ss << '_';
+        ss << address;
+        if (isStore) {
+            signal = 'S';
+        } else {
+            signal = 'L';
+        }
+        ss << signal;
+        ss << time;
 #if DEBUGINFO
-	ref<Expr> addressCurrent = executor->eval(ki, 0, state).value;
-	llvm::errs() << "address : " << address << " address Current : "
-			<< addressCurrent << "\n";
-	bool successCurrent = executor->getMemoryObject(op, state,
-			&state.addressSpace, addressCurrent);
-	llvm::errs() << "successCurrent : " << successCurrent << "\n";
-	llvm::errs() << "id : " << id << "\n";
+        llvm::errs() << "createGlobalVarFullName : " << ss.str() << "\n";
 #endif
-	ConstantExpr* realAddress = dyn_cast<ConstantExpr>(address);
-	if (realAddress) {
-		uint64_t key = realAddress->getZExtValue();
-		bool success = executor->getMemoryObject(op, state,
-				&(state.addressSpace), address);
-		if (success) {
-			const MemoryObject *mo = op.first;
-			isGlobal = executor->isGlobalMO(mo);
-			if (isGlobal) {
-				unsigned loadTime = getLoadTime(key);
-				std::string ld;
-				llvm::raw_string_ostream rso(ld);
-				ki->inst->print(rso);
-				std::stringstream ss;
-				unsigned int j = rso.str().find("=");
-				for (unsigned int i = 2; i < j; i++) {
-					ss << rso.str().at(i);
-				}
-				if(mo->isGlobal){
+        return ss.str();
+    }
 
-				}else {
-					ss << "con";
-				}
-				GlobalName = createGlobalVarFullName(ss.str(), mo->id, key,
-						isGlobal, loadTime, false);
-				if (id == Type::IntegerTyID) {
-					Expr::Width size = executor->getWidthForLLVMType(
-							ki->inst->getType());
-					ref<Expr> value = executor->getDestCell(state, ki).value;
-					ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+    unsigned Symbolic::getLoadTime(uint64_t address) {
+        unsigned loadTime;
+        std::map<uint64_t, unsigned>::iterator index = loadRecord.find(address);
+        if (index == loadRecord.end()) {
+            loadRecord.insert(std::make_pair(address, 1));
+            loadTime = 1;
+        } else {
+            loadTime = index->second + 1;
+            loadRecord[address] = loadTime;
+        }
+        return loadTime;
+    }
+
+    unsigned Symbolic::getStoreTime(uint64_t address) {
+        unsigned storeTime;
+        std::map<uint64_t, unsigned>::iterator index = storeRecord.find(address);
+        if (index == storeRecord.end()) {
+            storeRecord.insert(std::make_pair(address, 1));
+            storeTime = 1;
+        } else {
+            storeTime = index->second + 1;
+            storeRecord[address] = storeTime;
+        }
+        return storeTime;
+    }
+
+    void Symbolic::load(ExecutionState &state, KInstruction *ki) {
+        std::string GlobalName;
+        bool isGlobal;
+
+        Type::TypeID id = ki->inst->getType()->getTypeID();
+        ref<Expr> address = executor->eval(ki, 0, state).value;
+        ObjectPair op;
 #if DEBUGINFO
-					std::cerr << " load symbolic value : ";
-					symbolic->dump();
+        ref<Expr> addressCurrent = executor->eval(ki, 0, state).value;
+        llvm::errs() << "address : " << address << " address Current : "
+                     << addressCurrent << "\n";
+        bool successCurrent = executor->getMemoryObject(op, state,
+                                                        &state.addressSpace, addressCurrent);
+        llvm::errs() << "successCurrent : " << successCurrent << "\n";
+        llvm::errs() << "id : " << id << "\n";
 #endif
-					executor->bindLocal(ki, state, symbolic);
-					state.encode.globalname.push_back(GlobalName);
-					state.encode.globalexpr.push_back(symbolic);
-				} else {
+        ConstantExpr *realAddress = dyn_cast<ConstantExpr>(address);
+        if (realAddress) {
+            uint64_t key = realAddress->getZExtValue();
+            bool success = executor->getMemoryObject(op, state,
+                                                     &(state.addressSpace), address);
+            if (success) {
+                const MemoryObject *mo = op.first;
+                isGlobal = executor->isGlobalMO(mo);
+                if (isGlobal) {
+                    unsigned loadTime = getLoadTime(key);
+                    std::string ld;
+                    llvm::raw_string_ostream rso(ld);
+                    ki->inst->print(rso);
+                    std::stringstream ss;
+                    unsigned int j = rso.str().find("=");
+                    for (unsigned int i = 2; i < j; i++) {
+                        ss << rso.str().at(i);
+                    }
+                    if (mo->isGlobal) {
+
+                    } else {
+                        ss << "con";
+                    }
+                    GlobalName = createGlobalVarFullName(ss.str(), mo->id, key,
+                                                         isGlobal, loadTime, false);
+                    if (id == Type::IntegerTyID) {
+                        Expr::Width size = executor->getWidthForLLVMType(
+                                ki->inst->getType());
+                        ref<Expr> value = executor->getDestCell(state, ki).value;
+                        ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+#if DEBUGINFO
+                        std::cerr << " load symbolic value : ";
+                        symbolic->dump();
+#endif
+                        executor->bindLocal(ki, state, symbolic);
+                        state.encode.globalname.push_back(GlobalName);
+                        state.encode.globalexpr.push_back(symbolic);
+                    } else {
+                        Expr::Width size = executor->getWidthForLLVMType(
+                                ki->inst->getType());
+                        ref<Expr> value = executor->getDestCell(state, ki).value;
+                        ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+#if DEBUGINFO
+                        std::cerr << " load symbolic value : ";
+                        symbolic->dump();
+#endif
+                        executor->bindLocal(ki, state, symbolic);
+                        state.encode.globalname.push_back(GlobalName);
+                        state.encode.globalexpr.push_back(symbolic);
+                    }
+                }
+            } else {
+                llvm::errs() << "Load address = " << realAddress->getZExtValue()
+                             << "\n";
+                std::string ld;
+                llvm::raw_string_ostream rso(ld);
+                ki->inst->print(rso);
+                std::stringstream ss;
+                unsigned int j = rso.str().find("=");
+                for (unsigned int i = 2; i < j; i++) {
+                    ss << rso.str().at(i);
+                }
+                GlobalName = ss.str() + "erroraddr";
+                if (id == Type::IntegerTyID || id == Type::PointerTyID) {
                     Expr::Width size = executor->getWidthForLLVMType(
                             ki->inst->getType());
-                    ref<Expr> value = executor->getDestCell(state, ki).value;
                     ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+                    executor->bindLocal(ki, state, symbolic);
+                    ref<Expr> value = executor->getDestCell(state, ki).value;
 #if DEBUGINFO
                     std::cerr << " load symbolic value : ";
                     symbolic->dump();
+                    std::cerr << " load value : ";
+                    value->dump();
 #endif
-                    executor->bindLocal(ki, state, symbolic);
                     state.encode.globalname.push_back(GlobalName);
                     state.encode.globalexpr.push_back(symbolic);
-				}
-			}
-		} else {
-			llvm::errs() << "Load address = " << realAddress->getZExtValue()
-					<< "\n";
-			std::string ld;
-					llvm::raw_string_ostream rso(ld);
-					ki->inst->print(rso);
-					std::stringstream ss;
-					unsigned int j = rso.str().find("=");
-					for (unsigned int i = 2; i < j; i++) {
-						ss << rso.str().at(i);
-					}
-					GlobalName = ss.str() + "erroraddr";
-					if (id == Type::IntegerTyID || id == Type::PointerTyID) {
-						Expr::Width size = executor->getWidthForLLVMType(
-								ki->inst->getType());
-						ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
-				executor->bindLocal(ki, state, symbolic);
-						ref<Expr> value = executor->getDestCell(state, ki).value;
-			#if DEBUGINFO
-						std::cerr << " load symbolic value : ";
-						symbolic->dump();
-						std::cerr << " load value : ";
-						value->dump();
-			#endif
-						state.encode.globalname.push_back(GlobalName);
-						state.encode.globalexpr.push_back(symbolic);
-					}else {
-						assert(0 && " address is not const");
-			}
-		}
-	} else {
-		std::string ld;
-		llvm::raw_string_ostream rso(ld);
-		ki->inst->print(rso);
-		std::stringstream ss;
-		unsigned int j = rso.str().find("=");
-		for (unsigned int i = 2; i < j; i++) {
-			ss << rso.str().at(i);
-		}
-		GlobalName = ss.str() + "noaddr";
-		if (id == Type::IntegerTyID || id == Type::PointerTyID) {
-			Expr::Width size = executor->getWidthForLLVMType(
-					ki->inst->getType());
-			ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
-			executor->bindLocal(ki, state, symbolic);
-			ref<Expr> value = executor->getDestCell(state, ki).value;
+                } else {
+                    assert(0 && " address is not const");
+                }
+            }
+        } else {
+            std::string ld;
+            llvm::raw_string_ostream rso(ld);
+            ki->inst->print(rso);
+            std::stringstream ss;
+            unsigned int j = rso.str().find("=");
+            for (unsigned int i = 2; i < j; i++) {
+                ss << rso.str().at(i);
+            }
+            GlobalName = ss.str() + "noaddr";
+            if (id == Type::IntegerTyID || id == Type::PointerTyID) {
+                Expr::Width size = executor->getWidthForLLVMType(
+                        ki->inst->getType());
+                ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+                executor->bindLocal(ki, state, symbolic);
+                ref<Expr> value = executor->getDestCell(state, ki).value;
 #if DEBUGINFO
-			std::cerr << " load symbolic value : ";
-			symbolic->dump();
-			std::cerr << " load value : ";
-			value->dump();
+                std::cerr << " load symbolic value : ";
+                symbolic->dump();
+                std::cerr << " load value : ";
+                value->dump();
 #endif
-			state.encode.globalname.push_back(GlobalName);
-			state.encode.globalexpr.push_back(symbolic);
-		}else {
-			assert(0 && " address is not const");
-		}
-	}
-}
+                state.encode.globalname.push_back(GlobalName);
+                state.encode.globalexpr.push_back(symbolic);
+            } else {
+                assert(0 && " address is not const");
+            }
+        }
+    }
 
-void Symbolic::callReturnValue(ExecutionState &state, KInstruction *ki,
-		Function *function) {
-	Type *resultType = ki->inst->getType();
-	if (!resultType->isVoidTy()) {
-		Expr::Width size = executor->getWidthForLLVMType(ki->inst->getType());
-		std::string ld;
-		llvm::raw_string_ostream rso(ld);
-		ki->inst->print(rso);
-		std::stringstream ss;
-		unsigned int j = rso.str().find("=");
-		for (unsigned int i = 2; i < j; i++) {
-			ss << rso.str().at(i);
-		}
+    void Symbolic::callReturnValue(ExecutionState &state, KInstruction *ki,
+                                   Function *function) {
+        Type *resultType = ki->inst->getType();
+        if (!resultType->isVoidTy()) {
+            Expr::Width size = executor->getWidthForLLVMType(ki->inst->getType());
+            std::string ld;
+            llvm::raw_string_ostream rso(ld);
+            ki->inst->print(rso);
+            std::stringstream ss;
+            unsigned int j = rso.str().find("=");
+            for (unsigned int i = 2; i < j; i++) {
+                ss << rso.str().at(i);
+            }
 
-		std::string GlobalName = ss.str() + "call return";
-		ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
-		executor->bindLocal(ki, state, symbolic);
-		state.encode.globalname.push_back(GlobalName);
-		state.encode.globalexpr.push_back(symbolic);
+            std::string GlobalName = ss.str() + "call return";
+            ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
+            executor->bindLocal(ki, state, symbolic);
+            state.encode.globalname.push_back(GlobalName);
+            state.encode.globalexpr.push_back(symbolic);
 
-		Instruction *i = ki->inst;
-		llvm::CallSite cs(i);
-		unsigned numArgs = cs.arg_size();
-		for (unsigned j=0; j<numArgs; ++j) {
-			std::string argName = ss.str() + "call arg" + std::to_string(j);
-			Expr::Width size = executor->getWidthForLLVMType(cs.getArgument(j)->getType());
-			ref<Expr> arg = manualMakeSymbolic(argName, size);
-			executor->uneval(ki, j+1, state).value = arg;
+            Instruction *i = ki->inst;
+            llvm::CallSite cs(i);
+            unsigned numArgs = cs.arg_size();
+            for (unsigned j = 0; j < numArgs; ++j) {
+                std::string argName = ss.str() + "call arg" + std::to_string(j);
+                Expr::Width size = executor->getWidthForLLVMType(cs.getArgument(j)->getType());
+                ref<Expr> arg = manualMakeSymbolic(argName, size);
+                executor->uneval(ki, j + 1, state).value = arg;
 #if DEBUGINFO
-			std::cerr << "argName : " << argName << "\n";
-			std::cerr << "size : " << size << "\n";
-			std::cerr << "arg : ";
-			arg->dump();
+                std::cerr << "argName : " << argName << "\n";
+                std::cerr << "size : " << size << "\n";
+                std::cerr << "arg : ";
+                arg->dump();
 #endif
-		}
-	}
-}
+            }
+        }
+    }
+
+    void Symbolic::Alloca(ExecutionState &state, KInstruction *ki, unsigned size) {
+        AllocaInst *ai = cast<AllocaInst>(ki->inst);
+        if (ai->getAllocatedType()->getTypeID() == Type::IntegerTyID) {
+            ref<Expr> symbolic = manualMakeSymbolic(allocaName, size*8);
+
+            ObjectPair op;
+            ref<Expr> address = this->executor->getDestCell(state, ki).value;
+            ConstantExpr *realAddress = dyn_cast<ConstantExpr>(address);
+            if (realAddress) {
+                bool success = executor->getMemoryObject(op, state,
+                                                         &(state.addressSpace), address);
+                if (success) {
+                    const MemoryObject *mo = op.first;
+                    ref<Expr> offset = mo->getOffsetExpr(address);
+                    const ObjectState *os = op.second;
+                        if (os->readOnly) {
+                        } else {
+                            ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+                            wos->write(offset, symbolic);
+                        }
+                }
+            }
+
+        } else if (ai->getAllocatedType()->getTypeID() == Type::PointerTyID) {
+            ref<Expr> symbolic = manualMakeSymbolic(allocaName, BIT_WIDTH);
+
+            ObjectPair op;
+            ref<Expr> address = this->executor->getDestCell(state, ki).value;
+            ConstantExpr *realAddress = dyn_cast<ConstantExpr>(address);
+            if (realAddress) {
+                bool success = executor->getMemoryObject(op, state,
+                                                         &(state.addressSpace), address);
+                if (success) {
+                    const MemoryObject *mo = op.first;
+                    ref<Expr> offset = mo->getOffsetExpr(address);
+                    const ObjectState *os = op.second;
+                    if (os->readOnly) {
+                    } else {
+                        ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+                        wos->write(offset, symbolic);
+                    }
+                }
+            }
+        } else {
+            state.encode.ckeck = false;
+        }
+    }
+
+    int Symbolic::checkInst(ExecutionState &state, KInstruction *ki) {
+#if DEBUGINFO
+        std::cerr << "checkInst : " << "\n";
+#endif
+        if(!state.encode.ckeck) {
+            return 0;
+        }
+
+        int res = -1;
+
+        llvm::Instruction *inst = ki->inst;
+
+        std::string ld;
+        llvm::raw_string_ostream rso(ld);
+        inst->print(rso);
+        std::stringstream ss;
+        unsigned int j = rso.str().find("!");
+        for (unsigned int i = 0; i < j; i++) {
+            ss << rso.str().at(i);
+        }
+
+            if (inst->getOpcode() == Instruction::Load || inst->getOpcode() == Instruction::Store) {
+                ref<Expr> base = this->executor->eval(ki, 0, state).value;
+                ObjectPair op;
+                bool success = executor->getMemoryObject(op, state, &(state.addressSpace), base);
+                if (success) {
+                } else {
+                    res = 0;
+                    return res;
+                }
+            } else if (inst->getOpcode() == Instruction::Alloca) {
+            } else if (inst->getOpcode() == Instruction::Store) {
+
+                ref<Expr> base = this->executor->eval(ki, 1, state).value;
+                ObjectPair op;
+                bool success = executor->getMemoryObject(op, state, &(state.addressSpace), base);
+                if (success) {
+                } else {
+                    res = 0;
+                    return res;
+                }
+
+                ref<Expr> v = this->executor->eval(ki, 0, state).value;
+#if DEBUGINFO
+                v->dump();
+#endif
+                if (v->getKind() == Expr::Concat) {
+                    ConcatExpr *vv = cast<ConcatExpr>(v);
+                    ReadExpr *revalue = cast<ReadExpr>(vv->getKid(0));
+                    std::string name = revalue->updates.root->name;
+                    if (name == allocaName) {
+                        res = 0;
+                        return res;
+                    }
+                }
+
+            } else {
+                    uint64_t num = inst->getNumOperands();
+                    for (uint64_t idx = 0; idx < num; idx++) {
+                        if (inst->getOperand(idx)->getType()->getTypeID() == Type::IntegerTyID ||
+                                inst->getOperand(idx)->getType()->getTypeID() == Type::PointerTyID) {
+                            ref<Expr> v = this->executor->eval(ki, idx, state).value;
+#if DEBUGINFO
+                            v->dump();
+#endif
+                            if (v->getKind() == Expr::Concat) {
+                                ConcatExpr *vv = cast<ConcatExpr>(v);
+                                ReadExpr *revalue = cast<ReadExpr>(vv->getKid(0));
+                                std::string name = revalue->updates.root->name;
+                                if (name == allocaName) {
+                                    res = 0;
+                                    return res;
+                                }
+                            }
+                        }
+                    }
+            }
+        return res;
+    }
+
+    int Symbolic::isWarning(ExecutionState &state, KInstruction *ki) {
+        llvm::Instruction *inst = ki->inst;
+        std::string ld;
+        llvm::raw_string_ostream rso(ld);
+        inst->print(rso);
+        std::stringstream ss;
+        unsigned int j = rso.str().find("!");
+        if(j >= rso.str().size()){
+            return 0;
+        }
+        for (unsigned int i = 0; i < j; i++) {
+            ss << rso.str().at(i);
+        }
+#if DEBUGINFO
+        std::cerr << "isWarning : " << "\n";
+        std::cerr << state.encode.warning << std::endl;
+        std::cerr << ss.str() << std::endl;
+        std::cerr << inst->getParent()->getName().str() << std::endl;
+#endif
+        if(state.encode.warning.compare(ss.str()) == 0){
+#if DEBUGINFO
+            std::cerr << "state.encode.warning.compare : 0" << "\n";
+#endif
+            return 1;
+        } else {
+#if DEBUGINFO
+            std::cerr << "state.encode.warning.compare : !0" << "\n";
+#endif
+        }
+        return 0;
+    }
 
 } /* namespace klee */

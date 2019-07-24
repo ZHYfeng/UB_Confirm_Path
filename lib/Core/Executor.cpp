@@ -1055,7 +1055,9 @@ const Cell &Executor::eval(KInstruction *ki, unsigned index,
                            ExecutionState &state) const {
     assert(index < ki->inst->getNumOperands());
     int vnumber = ki->operands[index];
-
+#if DEBUGINFO
+    std::cerr << "vnumber : " << vnumber << "\n";
+#endif
     assert(vnumber != -1 &&
            "Invalid operand to eval(), not a value or constant!");
 
@@ -1067,8 +1069,8 @@ const Cell &Executor::eval(KInstruction *ki, unsigned index,
         unsigned index = vnumber;
         StackFrame &sf = state.stack.back();
 #if DEBUGINFO
-                                                                                                                                std::cerr << "index : " << index << "\n";
-    state.dumpStack(llvm::errs());
+        std::cerr << "index : " << index << "\n";
+        state.dumpStack(llvm::errs());
 #endif
         return sf.locals[index];
     }
@@ -1550,17 +1552,42 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     i->dump();
 #endif
 
-    if (i == i->getParent()->getTerminator()) {
-        int result;
-        result = state.encode.checkList(i->getParent()->getName());
-        if (result == -1) {
-            terminateState(state);
-            return;
-        } else if (result == 0) {
-            exit(0);
+    if(this->symbolic.isWarning(state, ki) == 1 ){
+        if(!state.encode.ckeck){
+            int result;
+            result = state.encode.checkList(i->getParent());
+            if (result == -1) {
+                terminateState(state);
+                return;
+            } else if (result == 0) {
+                state.encode.optput();
+                exit(0);
+            } else if (result == -2) {
+                state.encode.optput();
+            }
+        } else if (state.encode.ckeck) {
+            if (this->symbolic.checkInst(state, ki) == 0) {
+#if DEBUGINFO
+                std::cerr << "checkInst : 0" << "\n";
+#endif
+                int result;
+                result = state.encode.checkList(i->getParent());
+                if (result == -1) {
+                    terminateState(state);
+                    return;
+                } else if (result == 0) {
+                    state.encode.optput();
+                    exit(0);
+                } else if (result == -2) {
+                    state.encode.optput();
+                }
+            } else {
+#if DEBUGINFO
+                std::cerr << "checkInst : !0" << "\n";
+#endif
+            }
         }
     }
-
 
     switch (i->getOpcode()) {
         // Control flow
@@ -2239,12 +2266,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                 size = MulExpr::create(size, count);
             }
             executeAlloc(state, size, true, ki);
-            if(ai->getAllocatedType()->getTypeID() == Type::IntegerTyID) {
-
-            } else if (ai->getAllocatedType()->getTypeID() == Type::ArrayTyID){
-
-            }
-//            getDestCell(state, ki).value
+            this->symbolic.Alloca(state, ki, elementSize);
             break;
         }
 

@@ -32,13 +32,15 @@ namespace klee {
                                   cl::init("./jsonfile"));
 
     Encode::Encode() :
-            z3_ctxx(new context()), z3_solverr(*z3_ctxx), kq(*z3_ctxx), flag(1) {
+            z3_ctxx(new context()), z3_solverr(*z3_ctxx), kq(*z3_ctxx), flag(1), warning("") {
+        ckeck = true;
     }
 
     Encode::Encode(const Encode &e) :
-            z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), flag(e.flag) {
+            z3_ctxx(e.z3_ctxx), z3_solverr(e.z3_solverr), kq(*z3_ctxx), flag(e.flag), warning(e.warning) {
         Json = e.Json;
         json = nlohmann::json::parse(Json);
+        ckeck = e.ckeck;
         for (auto i : e.constraintexpr) {
             this->constraintexpr.push_back(i);
         }
@@ -170,6 +172,21 @@ namespace klee {
                 std::cerr << templist << "\n";
 #endif
             }
+        }
+
+        std::stringstream ss;
+        temp = json["warning"].dump();
+        j = temp.find("!");
+        if(j >= temp.size()){
+            this->ckeck = false;
+        } else {
+            for (unsigned int i = 1; i < j; i++) {
+                ss << temp.at(i);
+            }
+            this->warning = ss.str();
+#if DEBUGINFO
+            std::cerr << "warning : " << this->warning << "\n";
+#endif
         }
 
 //	std::ifstream whitelist(WhiteList);
@@ -309,14 +326,15 @@ namespace klee {
         }
     }
 
-    void Encode::checkUseList(llvm::StringRef label) {
-
+    void Encode::checkUseList(llvm::BasicBlock *bb) {
+        llvm::StringRef label = bb->getName();
         if (whiteList.size() == flag) {
             for (unsigned i = 0; i < useList.size(); i++) {
 #if DEBUGINFO
                 llvm::errs() << "useList : " << useList[i] << "\n";
 #endif
                 if (useList[i] == label.str()) {
+
                     for (unsigned int i = 0; i < constraintexpr.size(); i++) {
 #if DEBUGINFO
                         std::cerr << constraintexpr[i] << "\n";
@@ -412,14 +430,11 @@ namespace klee {
                                 tname = tname + "+" + name;
                             }
                             json["alt_name"] = tname;
+                            flag = -2;
                         } else {
                             flag = 0;
                         }
-                        std::ofstream out_file("confirm_result.json",
-                                               std::ios_base::out | std::ios_base::app);
-                        out_file << json.dump() << "\n";
-                        out_file.close();
-                        std::cerr << json.dump() << "\n";
+
                     } else if (result == z3::unknown) {
 
                     } else if (result == z3::unsat) {
@@ -516,10 +531,10 @@ namespace klee {
         }
     }
 
-    int Encode::checkList(llvm::StringRef label) {
-        checkWhiteList(label);
-        checkBlackList(label);
-        checkUseList(label);
+    int Encode::checkList(llvm::BasicBlock *bb) {
+        checkWhiteList(bb->getName());
+        checkBlackList(bb->getName());
+        checkUseList(bb);
 //        checkBBCount(label);
         return flag;
     }
@@ -531,5 +546,14 @@ namespace klee {
         std::cerr << "addpath : " << p << "\n";
 #endif
     }
+
+    void Encode::optput() {
+
+        std::ofstream out_file("confirm_result.json",
+                               std::ios_base::out | std::ios_base::app);
+        out_file << json.dump() << "\n";
+        out_file.close();
+    }
+
 
 }

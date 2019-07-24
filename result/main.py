@@ -26,7 +26,7 @@ klee_result_file_name = "confirm_result.json"
 log_file_name = "log.json"
 
 schedule_time = 1  # second
-time_out = 600  # second
+time_out = 60  # second
 time_out_file_name = "time_out.json"
 
 # notice: for the reason that python can not kill the klee quickly, it is better to set this small.
@@ -107,7 +107,9 @@ class ProcessTimer:
             if not self.check_execution_state():
                 return False
             self.t1 = time.time()
-            self.output, self.err = self.p.communicate()
+            # print("before")
+            # self.output, self.err = self.p.communicate()
+            # print("after")
             # print(self.output)
             # print(self.err)
             try:
@@ -135,6 +137,7 @@ class ProcessTimer:
                 self.max_vms_memory = max(self.max_vms_memory, vms_memory)
                 self.max_rss_memory = max(self.max_rss_memory, rss_memory)
 
+                # print(self.t1 - self.t0)
                 if self.t1 - self.t0 > time_out:
                     self.close()
                     self.output_json(time_out_file_name)
