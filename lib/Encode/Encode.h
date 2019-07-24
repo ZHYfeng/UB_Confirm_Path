@@ -49,6 +49,7 @@ public:
 	std::vector<int> isWhiteList;
     nlohmann::json json;
     bool ckeck;
+    bool warningL;
     std::string warning;
 
 

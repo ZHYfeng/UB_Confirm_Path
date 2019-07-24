@@ -315,6 +315,9 @@ namespace klee {
                 }
             }
         } else {
+#if DEBUGINFO
+            std::cerr << "Alloca state.encode.ckeck = false;" << "\n";
+#endif
             state.encode.ckeck = false;
         }
     }
@@ -330,15 +333,6 @@ namespace klee {
         int res = -1;
 
         llvm::Instruction *inst = ki->inst;
-
-        std::string ld;
-        llvm::raw_string_ostream rso(ld);
-        inst->print(rso);
-        std::stringstream ss;
-        unsigned int j = rso.str().find("!");
-        for (unsigned int i = 0; i < j; i++) {
-            ss << rso.str().at(i);
-        }
 
             if (inst->getOpcode() == Instruction::Load || inst->getOpcode() == Instruction::Store) {
                 ref<Expr> base = this->executor->eval(ki, 0, state).value;
@@ -407,11 +401,15 @@ namespace klee {
         std::stringstream ss;
         unsigned int j = rso.str().find("!");
         if(j >= rso.str().size()){
-            return 0;
+            for (unsigned int i = 0; i < rso.str().size(); i++) {
+                ss << rso.str().at(i);
+            }
+        } else {
+            for (unsigned int i = 0; i < j; i++) {
+                ss << rso.str().at(i);
+            }
         }
-        for (unsigned int i = 0; i < j; i++) {
-            ss << rso.str().at(i);
-        }
+
 #if DEBUGINFO
         std::cerr << "isWarning : " << "\n";
         std::cerr << state.encode.warning << std::endl;

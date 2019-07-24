@@ -1552,10 +1552,27 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     i->dump();
 #endif
 
+    if(i->getParent()->getTerminator() == i){
+        int result;
+        result = state.encode.checkList(i->getParent());
+        if (result == -1) {
+            terminateState(state);
+            return;
+        }
+    }
+
+
     if(this->symbolic.isWarning(state, ki) == 1 ){
+        state.encode.warningL = true;
+
+    }
+
+    if(state.encode.warningL){
+//        state.encode.warningL = false;
         if(!state.encode.ckeck){
             int result;
-            result = state.encode.checkList(i->getParent());
+            state.encode.checkUseList(i->getParent());
+            result = state.encode.flag;
             if (result == -1) {
                 terminateState(state);
                 return;
@@ -1571,7 +1588,8 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                 std::cerr << "checkInst : 0" << "\n";
 #endif
                 int result;
-                result = state.encode.checkList(i->getParent());
+                state.encode.checkUseList(i->getParent());
+                result = state.encode.flag;
                 if (result == -1) {
                     terminateState(state);
                     return;
@@ -1588,6 +1606,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
             }
         }
     }
+
 
     switch (i->getOpcode()) {
         // Control flow

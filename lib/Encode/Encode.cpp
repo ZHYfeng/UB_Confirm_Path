@@ -34,6 +34,7 @@ namespace klee {
     Encode::Encode() :
             z3_ctxx(new context()), z3_solverr(*z3_ctxx), kq(*z3_ctxx), flag(1), warning("") {
         ckeck = true;
+        warningL = false;
     }
 
     Encode::Encode(const Encode &e) :
@@ -41,6 +42,7 @@ namespace klee {
         Json = e.Json;
         json = nlohmann::json::parse(Json);
         ckeck = e.ckeck;
+        warningL = e.warningL;
         for (auto i : e.constraintexpr) {
             this->constraintexpr.push_back(i);
         }
@@ -178,7 +180,10 @@ namespace klee {
         temp = json["warning"].dump();
         j = temp.find("!");
         if(j >= temp.size()){
-            this->ckeck = false;
+            for (unsigned int i = 1; i < temp.size() - 1; i++) {
+                ss << temp.at(i);
+            }
+            this->warning = ss.str();
         } else {
             for (unsigned int i = 1; i < j; i++) {
                 ss << temp.at(i);
@@ -534,7 +539,6 @@ namespace klee {
     int Encode::checkList(llvm::BasicBlock *bb) {
         checkWhiteList(bb->getName());
         checkBlackList(bb->getName());
-        checkUseList(bb);
 //        checkBBCount(label);
         return flag;
     }
