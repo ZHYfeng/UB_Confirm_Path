@@ -172,8 +172,10 @@ namespace klee {
                     }
                 }
             } else {
+#if DEBUGINFO
                 llvm::errs() << "Load address = " << realAddress->getZExtValue()
                              << "\n";
+#endif
                 std::string ld;
                 llvm::raw_string_ostream rso(ld);
                 ki->inst->print(rso);
