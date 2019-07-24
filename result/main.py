@@ -207,9 +207,9 @@ class ProcessTimer:
         if not os.path.exists(self.path):
             os.makedirs(self.path)
         os.chdir(self.path)
-        # rm_cmd = "rm -rf klee-*"
-        # rm_subprocess = subprocess.Popen(rm_cmd, shell=True)
-        # rm_subprocess.wait()
+        rm_cmd = "rm -rf klee-*"
+        rm_subprocess = subprocess.Popen(rm_cmd, shell=True)
+        rm_subprocess.wait()
         os.chdir("../")
 
         self.initd = False
