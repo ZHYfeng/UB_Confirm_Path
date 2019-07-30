@@ -323,6 +323,8 @@ namespace klee {
     }
 
     int Symbolic::checkInst(ExecutionState &state, KInstruction *ki) {
+
+        return 0;
 #if DEBUGINFO
         std::cerr << "checkInst : " << "\n";
 #endif
