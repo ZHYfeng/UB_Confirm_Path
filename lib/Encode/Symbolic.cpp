@@ -336,7 +336,7 @@ namespace klee {
 
         llvm::Instruction *inst = ki->inst;
 
-            if (inst->getOpcode() == Instruction::Load || inst->getOpcode() == Instruction::Store) {
+            if (inst->getOpcode() == Instruction::Load) {
                 ref<Expr> base = this->executor->eval(ki, 0, state).value;
                 ObjectPair op;
                 bool success = executor->getMemoryObject(op, state, &(state.addressSpace), base);
