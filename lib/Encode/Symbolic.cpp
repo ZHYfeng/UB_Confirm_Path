@@ -274,7 +274,7 @@ namespace klee {
     void Symbolic::Alloca(ExecutionState &state, KInstruction *ki, unsigned size) {
         AllocaInst *ai = cast<AllocaInst>(ki->inst);
         if (ai->getAllocatedType()->getTypeID() == Type::IntegerTyID) {
-            ref<Expr> symbolic = manualMakeSymbolic(allocaName, size*8);
+            ref<Expr> symbolic = manualMakeSymbolic(allocaName, size * 8);
 
             ObjectPair op;
             ref<Expr> address = this->executor->getDestCell(state, ki).value;
@@ -286,11 +286,11 @@ namespace klee {
                     const MemoryObject *mo = op.first;
                     ref<Expr> offset = mo->getOffsetExpr(address);
                     const ObjectState *os = op.second;
-                        if (os->readOnly) {
-                        } else {
-                            ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-                            wos->write(offset, symbolic);
-                        }
+                    if (os->readOnly) {
+                    } else {
+                        ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+                        wos->write(offset, symbolic);
+                    }
                 }
             }
 
@@ -324,11 +324,11 @@ namespace klee {
 
     int Symbolic::checkInst(ExecutionState &state, KInstruction *ki) {
 
-        return 0;
+//        return 0;
 #if DEBUGINFO
         std::cerr << "checkInst : " << "\n";
 #endif
-        if(!state.encode.ckeck) {
+        if (!state.encode.ckeck) {
             return 0;
         }
 
@@ -336,62 +336,71 @@ namespace klee {
 
         llvm::Instruction *inst = ki->inst;
 
-            if (inst->getOpcode() == Instruction::Load) {
-                ref<Expr> base = this->executor->eval(ki, 0, state).value;
-                ObjectPair op;
-                bool success = executor->getMemoryObject(op, state, &(state.addressSpace), base);
-                if (success) {
-                } else {
-                    res = 0;
-                    return res;
-                }
-            } else if (inst->getOpcode() == Instruction::Alloca) {
-            } else if (inst->getOpcode() == Instruction::Store) {
-
-                ref<Expr> base = this->executor->eval(ki, 1, state).value;
-                ObjectPair op;
-                bool success = executor->getMemoryObject(op, state, &(state.addressSpace), base);
-                if (success) {
-                } else {
-                    res = 0;
-                    return res;
-                }
-
-                ref<Expr> v = this->executor->eval(ki, 0, state).value;
-#if DEBUGINFO
-                v->dump();
-#endif
-                if (v->getKind() == Expr::Concat) {
-                    ConcatExpr *vv = cast<ConcatExpr>(v);
-                    ReadExpr *revalue = cast<ReadExpr>(vv->getKid(0));
-                    std::string name = revalue->updates.root->name;
-                    if (name == allocaName) {
-                        res = 0;
-                        return res;
-                    }
-                }
-
+        if (inst->getOpcode() == Instruction::Load) {
+            ref<Expr> base = this->executor->eval(ki, 0, state).value;
+            ObjectPair op;
+            bool success = executor->getMemoryObject(op, state, &(state.addressSpace), base);
+            if (success) {
             } else {
-                    uint64_t num = inst->getNumOperands();
-                    for (uint64_t idx = 0; idx < num; idx++) {
-                        if (inst->getOperand(idx)->getType()->getTypeID() == Type::IntegerTyID ||
-                                inst->getOperand(idx)->getType()->getTypeID() == Type::PointerTyID) {
-                            ref<Expr> v = this->executor->eval(ki, idx, state).value;
+                res = 0;
+                return res;
+            }
+        } else if (inst->getOpcode() == Instruction::Alloca) {
+        } else if (inst->getOpcode() == Instruction::Store) {
+
+            ref<Expr> base = this->executor->eval(ki, 1, state).value;
+            ObjectPair op;
+            bool success = executor->getMemoryObject(op, state, &(state.addressSpace), base);
+            if (success) {
+            } else {
+                res = 0;
+                return res;
+            }
+
+            ref<Expr> v = this->executor->eval(ki, 0, state).value;
 #if DEBUGINFO
-                            v->dump();
+            v->dump();
 #endif
-                            if (v->getKind() == Expr::Concat) {
-                                ConcatExpr *vv = cast<ConcatExpr>(v);
-                                ReadExpr *revalue = cast<ReadExpr>(vv->getKid(0));
-                                std::string name = revalue->updates.root->name;
-                                if (name == allocaName) {
-                                    res = 0;
-                                    return res;
-                                }
-                            }
+            if (v->getKind() == Expr::Concat) {
+                ConcatExpr *vv = cast<ConcatExpr>(v);
+                ReadExpr *revalue = cast<ReadExpr>(vv->getKid(0));
+                std::string name = revalue->updates.root->name;
+                if (name == allocaName) {
+                    res = 0;
+                    return res;
+                }
+            }
+
+            if (v->getKind() != Expr::Constant) {
+                res = 0;
+            }
+
+        } else {
+            uint64_t num = inst->getNumOperands();
+            for (uint64_t idx = 0; idx < num; idx++) {
+                if (inst->getOperand(idx)->getType()->getTypeID() == Type::IntegerTyID ||
+                    inst->getOperand(idx)->getType()->getTypeID() == Type::PointerTyID) {
+                    ref<Expr> v = this->executor->eval(ki, idx, state).value;
+#if DEBUGINFO
+                    v->dump();
+#endif
+                    if (v->getKind() == Expr::Concat) {
+                        ConcatExpr *vv = cast<ConcatExpr>(v);
+                        ReadExpr *revalue = cast<ReadExpr>(vv->getKid(0));
+                        std::string name = revalue->updates.root->name;
+                        if (name == allocaName) {
+                            res = 0;
+                            return res;
                         }
                     }
+
+                    if (v->getKind() != Expr::Constant) {
+                        res = 0;
+                    }
+
+                }
             }
+        }
         return res;
     }
 
@@ -402,7 +411,7 @@ namespace klee {
         inst->print(rso);
         std::stringstream ss;
         unsigned int j = rso.str().find("!");
-        if(j >= rso.str().size()){
+        if (j >= rso.str().size()) {
             for (unsigned int i = 0; i < rso.str().size(); i++) {
                 ss << rso.str().at(i);
             }
@@ -418,7 +427,7 @@ namespace klee {
         std::cerr << ss.str() << std::endl;
         std::cerr << inst->getParent()->getName().str() << std::endl;
 #endif
-        if(state.encode.warning.compare(ss.str()) == 0){
+        if (state.encode.warning.compare(ss.str()) == 0) {
 #if DEBUGINFO
             std::cerr << "state.encode.warning.compare : 0" << "\n";
 #endif
