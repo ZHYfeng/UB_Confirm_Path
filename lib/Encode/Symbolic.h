@@ -43,6 +43,8 @@ public:
 	void Alloca(ExecutionState &state, KInstruction *ki, unsigned size);
     int isWarning(ExecutionState &state, KInstruction *ki);
     int checkInst(ExecutionState &state, KInstruction *ki);
+    std::string getName(ref<klee::Expr> value);
+    void resolveSymbolicExpr(ref<klee::Expr> symbolicExpr, std::set<std::string> &relatedSymbolicExpr);
 private:
 	ref<Expr> manualMakeSymbolic(std::string name, unsigned size);
 	ref<Expr> readExpr(ExecutionState &state, ref<Expr> address,

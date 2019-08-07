@@ -23,6 +23,17 @@
 #include "../Core/Memory.h"
 #include "Encode.h"
 
+#include <llvm/IR/Constant.h>
+#include <llvm/IR/Instruction.h>
+#include <llvm/Support/Casting.h>
+#include <cassert>
+#include <iostream>
+#include <iterator>
+#include <map>
+#include <sstream>
+#include <utility>
+#include "../../include/klee/Internal/Module/KInstruction.h"
+
 namespace klee {
 
     Symbolic::Symbolic(Executor *executor) {
@@ -32,6 +43,40 @@ namespace klee {
 
     Symbolic::~Symbolic() {
         // TODO Auto-generated destructor stub
+    }
+
+
+    std::string Symbolic::getName(ref<klee::Expr> value) {
+        ReadExpr *revalue;
+        if (value->getKind() == Expr::Concat) {
+            ConcatExpr *ccvalue = cast<ConcatExpr>(value);
+            revalue = cast<ReadExpr>(ccvalue->getKid(0));
+        } else if (value->getKind() == Expr::Read) {
+            revalue = cast<ReadExpr>(value);
+        } else {
+            assert(0 && "getGlobalName");
+        }
+        std::string globalName = revalue->updates.root->name;
+        return globalName;
+    }
+
+    void Symbolic::resolveSymbolicExpr(ref<klee::Expr> symbolicExpr, std::set<std::string> &relatedSymbolicExpr) {
+        if (symbolicExpr->getKind() == Expr::Read) {
+            std::string name = getName(symbolicExpr);
+            if (relatedSymbolicExpr.find(name) == relatedSymbolicExpr.end()) {
+                relatedSymbolicExpr.insert(name);
+            }
+            return;
+        } else {
+            unsigned kidsNum = symbolicExpr->getNumKids();
+            if (kidsNum == 2 && symbolicExpr->getKid(0) == symbolicExpr->getKid(1)) {
+                resolveSymbolicExpr(symbolicExpr->getKid(0), relatedSymbolicExpr);
+            } else {
+                for (unsigned int i = 0; i < kidsNum; i++) {
+                    resolveSymbolicExpr(symbolicExpr->getKid(i), relatedSymbolicExpr);
+                }
+            }
+        }
     }
 
     ref<Expr> Symbolic::manualMakeSymbolic(std::string name, unsigned int size) {
@@ -369,11 +414,20 @@ namespace klee {
                     res = 0;
                     return res;
                 }
+            } else if(v->getKind() != Expr::Constant){
+                std::set<std::string> relatedSymbolicExpr;
+                resolveSymbolicExpr(v, relatedSymbolicExpr);
+                for(auto name : relatedSymbolicExpr) {
+                    if (name == allocaName) {
+                        res = 0;
+                        return res;
+                    }
+                }
             }
 
-            if (v->getKind() != Expr::Constant) {
-                res = 0;
-            }
+//            if (v->getKind() != Expr::Constant) {
+//                res = 0;
+//            }
 
         } else {
             uint64_t num = inst->getNumOperands();
@@ -392,11 +446,20 @@ namespace klee {
                             res = 0;
                             return res;
                         }
+                    } else if(v->getKind() != Expr::Constant){
+                        std::set<std::string> relatedSymbolicExpr;
+                        resolveSymbolicExpr(v, relatedSymbolicExpr);
+                        for(auto name : relatedSymbolicExpr) {
+                            if (name == allocaName) {
+                                res = 0;
+                                return res;
+                            }
+                        }
                     }
 
-                    if (v->getKind() != Expr::Constant) {
-                        res = 0;
-                    }
+//                    if (v->getKind() != Expr::Constant) {
+//                        res = 0;
+//                    }
 
                 }
             }
