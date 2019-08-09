@@ -544,7 +544,7 @@ public:
   Cell& getDestCell(ExecutionState &state,
                     KInstruction *target) {
 #if DEBUGINFO
-	  std::cerr << "target->dest : " << target->dest << "\n";
+//	  std::cerr << "target->dest : " << target->dest << "\n";
 #endif
 	  return state.stack.back().locals[target->dest];
   }

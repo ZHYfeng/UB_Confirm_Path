@@ -1056,7 +1056,7 @@ const Cell &Executor::eval(KInstruction *ki, unsigned index,
     assert(index < ki->inst->getNumOperands());
     int vnumber = ki->operands[index];
 #if DEBUGINFO
-    std::cerr << "vnumber : " << vnumber << "\n";
+//    std::cerr << "vnumber : " << vnumber << "\n";
 #endif
     assert(vnumber != -1 &&
            "Invalid operand to eval(), not a value or constant!");
@@ -1069,8 +1069,8 @@ const Cell &Executor::eval(KInstruction *ki, unsigned index,
         unsigned index = vnumber;
         StackFrame &sf = state.stack.back();
 #if DEBUGINFO
-        std::cerr << "index : " << index << "\n";
-        state.dumpStack(llvm::errs());
+//        std::cerr << "index : " << index << "\n";
+//        state.dumpStack(llvm::errs());
 #endif
         return sf.locals[index];
     }
@@ -2021,7 +2021,9 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                 /* XXX This is wasteful, no need to do a full evaluate since we
          have already got a value. But in the end the caches should
          handle it for us, albeit with some overhead. */
+                int i = 0;
                 do {
+                    i++;
                     v = optimizer.optimizeExpr(v, true);
                     ref<ConstantExpr> value;
                     bool success = solver->getValue(*free, v, value);
@@ -2052,7 +2054,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 
                     first = false;
                     free = res.second;
-                } while (free);
+                } while (free && i < 3);
             }
             break;
         }
@@ -2296,7 +2298,8 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
             std::cerr << "load base :";
             base->dump();
             std::cerr << "load value :";
-            ;
+            ref<Expr> value = getDestCell(state, ki).value;
+            value->dump();
 #endif
             break;
         }
