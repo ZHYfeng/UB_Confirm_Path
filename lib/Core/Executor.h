@@ -545,6 +545,7 @@ public:
                     KInstruction *target) {
 #if DEBUGINFO
 //	  std::cerr << "target->dest : " << target->dest << "\n";
+      state.dumpStack(llvm::errs());
 #endif
 	  return state.stack.back().locals[target->dest];
   }

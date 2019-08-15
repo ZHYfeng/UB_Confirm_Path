@@ -24,6 +24,7 @@ static Context TheContext;
 void Context::initialize(bool IsLittleEndian, Expr::Width PointerWidth) {
   assert(!Initialized && "Duplicate context initialization!");
   TheContext = Context(IsLittleEndian, PointerWidth);
+//    TheContext = Context(IsLittleEndian, Expr::Int64);
   Initialized = true;
 }
 

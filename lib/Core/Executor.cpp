@@ -512,7 +512,7 @@ void Executor::initializeGlobalObject(ExecutionState &state, ObjectState *os,
         ref<ConstantExpr> C = evalConstant(c);
 
         // Extend the constant if necessary;
-        assert(StoreBits >= C->getWidth() && "Invalid store size!");
+//        assert(StoreBits >= C->getWidth() && "Invalid store size!");
         if (StoreBits > C->getWidth())
             C = C->ZExt(StoreBits);
 
@@ -1056,7 +1056,8 @@ const Cell &Executor::eval(KInstruction *ki, unsigned index,
     assert(index < ki->inst->getNumOperands());
     int vnumber = ki->operands[index];
 #if DEBUGINFO
-//    std::cerr << "vnumber : " << vnumber << "\n";
+    printf("eval state : %x\n", &(state));
+    std::cerr << "vnumber : " << vnumber << "\n";
 #endif
     assert(vnumber != -1 &&
            "Invalid operand to eval(), not a value or constant!");
@@ -1069,8 +1070,9 @@ const Cell &Executor::eval(KInstruction *ki, unsigned index,
         unsigned index = vnumber;
         StackFrame &sf = state.stack.back();
 #if DEBUGINFO
-//        std::cerr << "index : " << index << "\n";
-//        state.dumpStack(llvm::errs());
+        std::cerr << "index : " << index << "\n";
+        state.dumpStack(llvm::errs());
+        printf("eval cell : %x\n", &(sf.locals[index]));
 #endif
         return sf.locals[index];
     }
@@ -1102,6 +1104,10 @@ Cell &Executor::uneval(KInstruction *ki, unsigned index,
 
 void Executor::bindLocal(KInstruction *target, ExecutionState &state,
                          ref<Expr> value) {
+#if DEBUGINFO
+    printf("bindLocal state : %x\n", &(state));
+    printf("bindLocal cell : %x\n", &(getDestCell(state, target)));
+#endif
     getDestCell(state, target).value = value;
 }
 
@@ -2013,48 +2019,48 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 
                 executeCall(state, ki, f, arguments);
             } else {
-                ref<Expr> v = eval(ki, 0, state).value;
-
-                ExecutionState *free = &state;
-                bool hasInvalid = false, first = true;
-
-                /* XXX This is wasteful, no need to do a full evaluate since we
-         have already got a value. But in the end the caches should
-         handle it for us, albeit with some overhead. */
-                int i = 0;
-                do {
-                    i++;
-                    v = optimizer.optimizeExpr(v, true);
-                    ref<ConstantExpr> value;
-                    bool success = solver->getValue(*free, v, value);
-                    assert(success && "FIXME: Unhandled solver failure");
-                    (void) success;
-                    StatePair res = fork(*free, EqExpr::create(v, value), true);
-                    if (res.first) {
-                        uint64_t addr = value->getZExtValue();
-                        if (legalFunctions.count(addr)) {
-                            f = (Function *) addr;
-
-                            // Don't give warning on unique resolution
-                            if (res.second || !first)
-                                klee_warning_once(reinterpret_cast<void *>(addr),
-                                                  "resolved symbolic function pointer to: %s",
-                                                  f->getName().data());
-
-                            executeCall(*res.first, ki, f, arguments);
-                        } else {
-                            if (!hasInvalid) {
-//              terminateStateOnExecError(state, "invalid function pointer");
-                                klee_message("symbolic: (location information missing) %s", "invalid function pointer");
-                                symbolic.callReturnValue(state, ki, f);
-                                hasInvalid = true;
-                            }
-                        }
-                    }
-
-                    first = false;
-                    free = res.second;
-                } while (free && i < 3);
+//                ref<Expr> v = eval(ki, 0, state).value;
+//
+//                ExecutionState *free = &state;
+//                bool hasInvalid = false, first = true;
+//
+//                /* XXX This is wasteful, no need to do a full evaluate since we
+//         have already got a value. But in the end the caches should
+//         handle it for us, albeit with some overhead. */
+//                int i = 0;
+//                do {
+//                    i++;
+//                    v = optimizer.optimizeExpr(v, true);
+//                    ref<ConstantExpr> value;
+//                    bool success = solver->getValue(*free, v, value);
+//                    assert(success && "FIXME: Unhandled solver failure");
+//                    (void) success;
+//                    StatePair res = fork(*free, EqExpr::create(v, value), true);
+//                    if (res.first) {
+//                        uint64_t addr = value->getZExtValue();
+//                        if (legalFunctions.count(addr)) {
+//                            f = (Function *) addr;
+//
+//                            // Don't give warning on unique resolution
+//                            if (res.second || !first)
+//                                klee_warning_once(reinterpret_cast<void *>(addr),
+//                                                  "resolved symbolic function pointer to: %s",
+//                                                  f->getName().data());
+//
+//                            executeCall(*res.first, ki, f, arguments);
+//                        } else {
+//                            if (!hasInvalid) {
+////              terminateStateOnExecError(state, "invalid function pointer");
+//                                klee_message("symbolic: (location information missing) %s", "invalid function pointer");
+//                                hasInvalid = true;
+//                            }
+//                        }
+//                    }
+//
+//                    first = false;
+//                    free = res.second;
+//                } while (free && i < 3);
+                symbolic.callReturnValue(state, ki, f);
             }
             break;
         }
@@ -2307,10 +2313,10 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
             ref<Expr> base = eval(ki, 1, state).value;
             ref<Expr> value = eval(ki, 0, state).value;
 #if DEBUGINFO
-                                                                                                                                    std::cerr << "store value :";
-    value->dump();
-    std::cerr << "store base :";
-    base->dump();
+            std::cerr << "store base :";
+            base->dump();
+            std::cerr << "store value :";
+            value->dump();
 #endif
             executeMemoryOperation(state, true, base, value, 0);
             break;
@@ -3688,19 +3694,28 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                     wos->write(offset, value);
                 }
             } else {
-                if (os->initialize == false) {
+                if (!os->initialize) {
 #if DEBUGINFO
-                    std::cerr << "os->initialize == false" << "\n";
+                    std::cerr << "!os->initialize" << "\n";
 #endif
                     unsigned int size = 0;
                     ref<Expr> expr;
                     Type *ty = target->inst->getType();
                     switch (ty->getTypeID()) {
                         case llvm::Type::PointerTyID: {
+
+#if DEBUGINFO
+                            std::cerr << "llvm::Type::PointerTyID: " << "\n";
+#endif
+
                             if (PointerType *pt = dyn_cast<PointerType>(ty)) {
                                 Type *kind = pt->getElementType();
                                 if (kind->isSized()) {
                                     size = kmodule->targetData->getTypeStoreSize(kind);
+                                } else {
+#if DEBUGINFO
+                                    std::cerr << "size : " << size << "\n";
+#endif
                                 }
                                 MemoryObject *lmo = memory->allocate(size,
                                         /*isLocal=*/false, /*isGlobal=*/false,
@@ -3711,7 +3726,12 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                                 los->initialize = false;
 //			ref<Expr> kexpr = createSymbolicArg(state, kind, first);
                                 ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-
+#if DEBUGINFO
+                                std::cerr << "offset : ";
+                                offset->dump();
+                                std::cerr << "expr : ";
+                                expr->dump();
+#endif
                                 wos->write(offset, expr);
                             }
                             break;
@@ -3767,15 +3787,24 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                     }
                 }
 #if DEBUGINFO
-                std::cerr << "3724 type : " << type << "\n";
+                std::cerr << "type : " << type << "\n";
+                std::cerr << "offset : ";
+                offset->dump();
 #endif
-                ref<Expr> result = os->read(offset, type);
+                const ObjectState *nos = state.addressSpace.findObject(mo);
+                ref<Expr> result = nos->read(offset, type);
+
+#if DEBUGINFO
+                std::cerr << "load value :";
+                result->dump();
+#endif
+
                 if (interpreterOpts.MakeConcreteSymbolic)
                     result = replaceReadWithSymbolic(state, result);
 
                 bindLocal(target, state, result);
 #if DEBUGINFO
-                                                                                                                                        ref<Expr> value = getDestCell(state, target).value;
+          ref<Expr> value = getDestCell(state, target).value;
           std::cerr << "load value :";
           value->dump();
 #endif

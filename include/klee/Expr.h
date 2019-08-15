@@ -23,6 +23,7 @@
 #include <set>
 #include <vector>
 #include <map>
+#include <iostream>
 
 #define DEBUGINFO 0
 
@@ -1080,8 +1081,12 @@ public:
 
   static ref<ConstantExpr> create(uint64_t v, Width w) {
 #ifndef NDEBUG
-    if (w <= 64)
-      assert(v == bits64::truncateToNBits(v, w) && "invalid constant");
+    if (w <= 64){
+        if(v != bits64::truncateToNBits(v, w)){
+            w = Int64;
+        }
+        assert(v == bits64::truncateToNBits(v, w) && "invalid constant");
+    }
 #endif
     return alloc(v, w);
   }

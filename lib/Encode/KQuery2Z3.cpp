@@ -161,8 +161,11 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
             z3::expr cond = eachExprToZ3(se->cond);
             z3::expr tExpr = eachExprToZ3(se->trueExpr);
             z3::expr fExpr = eachExprToZ3(se->falseExpr);
-
-            res = z3::ite(cond, tExpr, fExpr);
+            if(cond.get_sort().is_bool()){
+                res = z3::ite(cond, tExpr, fExpr);
+            } else {
+                res = z3::ite(cond != 0, tExpr, fExpr);
+            }
             return res;
         }
 
@@ -217,12 +220,14 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
         case Expr::ZExt: {
             CastExpr *ce = cast<CastExpr>(ele);
             z3::expr src = eachExprToZ3(ce->src);
-
-            if (0 && ce->src.get()->getWidth() == Expr::Bool) {
+#if DEBUGINFO
+            std::cerr << "src : " << src << "\nsrc.get_sort() : " << src.get_sort() << std::endl;
+#endif
+            if (ce->src.get()->getWidth() == Expr::Bool && src.get_sort().is_bool()) {
 #if INT_ARITHMETIC
                 res = z3::ite(src, z3_ctx.int_val(1), z3_ctx.int_val(0));
 #else
-                res = z3::ite((src != 0), z3_ctx.bv_val(1, BIT_WIDTH), z3_ctx.bv_val(0, BIT_WIDTH));
+                res = z3::ite((src), z3_ctx.bv_val(1, BIT_WIDTH), z3_ctx.bv_val(0, BIT_WIDTH));
 //				res = z3::ite(
 //					z3::to_expr(z3_ctx, Z3_mk_extract(z3_ctx, 0, 0, src)),
 //					z3_ctx.bool_val(true), z3_ctx.bool_val(false));
@@ -236,7 +241,7 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
                 res = src;
             }
 #if DEBUGINFO
-            std::cerr << "case Expr::ZExt: " << res << " ce->width : " << ce->width << std::endl;
+            std::cerr << "case Expr::ZExt: " << res << "\nce->width : " << ce->width << std::endl;
 #endif
             return res;
         }
@@ -244,7 +249,7 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
         case Expr::SExt: {
             CastExpr *ce = cast<CastExpr>(ele);
             z3::expr src = eachExprToZ3(ce->src);
-            if (0 && ce->src.get()->getWidth() == Expr::Bool
+            if (ce->src.get()->getWidth() == Expr::Bool
                 && ce->width != Expr::Bool) {
 #if INT_ARITHMETIC
                 res = z3::ite(src, z3_ctx.int_val(1), z3_ctx.int_val(0));
@@ -261,6 +266,10 @@ z3::expr KQuery2Z3::eachExprToZ3(ref<Expr> &ele) {
             AddExpr *ae = cast<AddExpr>(ele);
             z3::expr left = eachExprToZ3(ae->left);
             z3::expr right = eachExprToZ3(ae->right);
+#if DEBUGINFO
+            std::cerr << "left: " << left.get_sort() << std::endl;
+            std::cerr << "right : " << right.get_sort() << std::endl;
+#endif
             res = left + right;
             return res;
         }

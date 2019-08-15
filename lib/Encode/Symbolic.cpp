@@ -295,6 +295,9 @@ namespace klee {
             std::string GlobalName = ss.str() + "call return";
             ref<Expr> symbolic = manualMakeSymbolic(GlobalName, size);
             executor->bindLocal(ki, state, symbolic);
+#if DEBUGINFO
+            std::cerr << "ki->dest : " << ki->dest << "\n";
+#endif
             state.encode.globalname.push_back(GlobalName);
             state.encode.globalexpr.push_back(symbolic);
 
@@ -318,6 +321,9 @@ namespace klee {
 
     void Symbolic::Alloca(ExecutionState &state, KInstruction *ki, unsigned size) {
         AllocaInst *ai = cast<AllocaInst>(ki->inst);
+        if(this->executor->eval(ki, 0, state).value->getKind() != Expr::Constant){
+            return;
+        }
         if (ai->getAllocatedType()->getTypeID() == Type::IntegerTyID) {
             ref<Expr> symbolic = manualMakeSymbolic(allocaName, size * 8);
 
@@ -391,6 +397,7 @@ namespace klee {
                 return res;
             }
         } else if (inst->getOpcode() == Instruction::Alloca) {
+        } else if (inst->getOpcode() == Instruction::PHI) {
         } else if (inst->getOpcode() == Instruction::Store) {
 
             ref<Expr> base = this->executor->eval(ki, 1, state).value;
@@ -430,12 +437,22 @@ namespace klee {
 //            }
 
         } else {
+
             uint64_t num = inst->getNumOperands();
+#if DEBUGINFO
+            std::cerr << "inst->getOpcode() : " << inst->getOpcode() << "\n";
+            std::cerr << "num : " << num << "\n";
+#endif
             for (uint64_t idx = 0; idx < num; idx++) {
                 if (inst->getOperand(idx)->getType()->getTypeID() == Type::IntegerTyID ||
                     inst->getOperand(idx)->getType()->getTypeID() == Type::PointerTyID) {
+                    int vnumber = ki->operands[idx];
+                    if (vnumber == -1) {
+                        break;
+                    }
                     ref<Expr> v = this->executor->eval(ki, idx, state).value;
 #if DEBUGINFO
+                    std::cerr << "operand : " << idx << "\n";
                     v->dump();
 #endif
                     if (v->getKind() == Expr::Concat) {
