@@ -1460,6 +1460,7 @@ int main(int argc, char **argv, char **envp) {
     << "KLEE: done: query cex = " << queryCounterexamples << "\n";
 
   std::stringstream stats;
+#ifdef STATOUTPUT
   stats << "\n";
   stats << "KLEE: done: total instructions = "
         << instructions << "\n";
@@ -1467,7 +1468,7 @@ int main(int argc, char **argv, char **envp) {
         << handler->getNumPathsExplored() << "\n";
   stats << "KLEE: done: generated tests = "
         << handler->getNumTestCases() << "\n";
-
+#endif
   bool useColors = llvm::errs().is_displayed();
   if (useColors)
     llvm::errs().changeColor(llvm::raw_ostream::GREEN,

@@ -339,9 +339,8 @@ namespace klee {
                 llvm::errs() << "useList : " << useList[i] << "\n";
 #endif
                 if (useList[i] == label.str()) {
-
                     for (unsigned int i = 0; i < constraintexpr.size(); i++) {
-#if DEBUGINFO
+#if DEBUGINFO 
                         std::cerr << constraintexpr[i] << "\n";
 #endif
                         z3_solverr.add(constraintexpr[i]);
