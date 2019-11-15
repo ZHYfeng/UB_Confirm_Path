@@ -19,14 +19,14 @@ import signal
 # those variables need you change
 
 total_cpu = multiprocessing.cpu_count() - 15
-klee_path = "/home/yizhuo/klee/2018_klee_confirm_path/build/bin/klee"
+klee_path = "/dir/to/2018_klee_confirm_path/build/bin/klee"
 klee_log_file_name = "confirm_result.log"
 klee_result_file_name = "confirm_result.json"
 
 log_file_name = "log.json"
 
 schedule_time = 1  # second
-time_out = 2000  # second
+time_out = 120  # second
 time_out_file_name = "time_out.json"
 
 # notice: for the reason that python can not kill the klee quickly, it is better to set this small.
