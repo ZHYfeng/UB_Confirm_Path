@@ -18,19 +18,19 @@ import signal
 
 # those variables need you change
 
-total_cpu = multiprocessing.cpu_count() - 8
-klee_path = "/home/yhao/git/2018_klee_confirm_path/cmake-build-debug/bin/klee"
+total_cpu = multiprocessing.cpu_count() - 15
+klee_path = "/home/yizhuo/klee/2018_klee_confirm_path/build/bin/klee"
 klee_log_file_name = "confirm_result.log"
 klee_result_file_name = "confirm_result.json"
 
 log_file_name = "log.json"
 
 schedule_time = 1  # second
-time_out = 60  # second
+time_out = 2000  # second
 time_out_file_name = "time_out.json"
 
 # notice: for the reason that python can not kill the klee quickly, it is better to set this small.
-memory_out = 1 * 1024 * 1024 * 1024  # byte
+memory_out = 2 * 1024 * 1024 * 1024  # byte
 memory_out_file_name = "memory_out.json"
 
 right_return_code = 0
@@ -57,11 +57,12 @@ class ProcessTimer:
         self.link_file = self.link_file.replace(linux_kernel_path_in_json, linux_kernel_path_in_this_pc)
         bc_list = self.link_file.replace(":\n", "")
         bc_list = bc_list.split(":")
-        link_cmd = "llvm-link -o " + "./built-in.bc"
+        link_cmd = "/data/home/yizhuo/llvm-7.0.0/build-dbg/bin/llvm-link -o " + "./built-in.bc"
+	#print link_cmd
         for bc in bc_list:
             link_cmd = link_cmd + " " + bc
         self.link_cmd = link_cmd
-
+	
         self.json = json
         self.json = self.json.replace("\n", "")
         # klee_cmd = klee_path + " -json=\'" + self.json + "\' " + "./built-in.bc 2>&1 | tee >> " + klee_log_file_name
@@ -256,7 +257,7 @@ def read_all_json(file_name):
     f = open(file_name, "a")
     for i in range(total_cpu):
         path_file_name = str(i) + "/" + file_name
-        print(path_file_name)
+        # print(path_file_name)
         if os.path.isfile(path_file_name):
             tf = open(path_file_name, "r")
             f.write(tf.read())
