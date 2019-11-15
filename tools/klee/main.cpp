@@ -333,7 +333,6 @@ KleeHandler::KleeHandler(int argc, char **argv)
         klee_error("cannot create output directory: index out of range");
   }
 
-  klee_message("output directory is \"%s\"", m_outputDirectory.c_str());
 
   // open warnings.txt
   std::string file_path = getOutputFilename("warnings.txt");
@@ -1079,13 +1078,9 @@ int main(int argc, char **argv, char **envp) {
 //	temp.erase(temp.begin(),temp.begin()+3);
 //	temp.erase(temp.end()-1,temp.end());
 //	InputFile = temp;
-	std::cerr << "bc : " << InputFile << "\n";
 	EntryPoint = json["function"].dump();
 	EntryPoint.erase(EntryPoint.begin(),EntryPoint.begin()+1);
 	EntryPoint.erase(EntryPoint.end()-1,EntryPoint.end());
-
-	std::cerr << "function : " << EntryPoint << "\n";
-	std::cerr << "json : \n" << json.dump() << "\n";
 
   if (Watchdog) {
     if (MaxTime.empty()) {

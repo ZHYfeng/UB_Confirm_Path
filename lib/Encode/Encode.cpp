@@ -349,13 +349,15 @@ namespace klee {
                     check_result result = z3_solverr.check();
                     if (result == z3::sat) {
                         model m = z3_solverr.get_model();
-#if DEBUGINFO || !DEBUGINFO
+#if DEBUGINFO
                         std::cerr << "Yes!\n";
                         std::cerr << "\nz3_solver.get_model()\n";
                         std::cerr << "\n" << m << "\n";
 #endif
                         json["find"] = "Yes";
-
+			std::string fileName = json["bc"];
+			std::string temp = fileName.substr(0, fileName.size()-2);
+			std::cout << "[SrcCode] " << temp << "c +" << json["lineNo"] << std::endl;
                         std::stringstream ss;
                         ss.str("");
                         for (unsigned int i = 0; i < path_name.size(); i++) {
