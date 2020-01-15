@@ -52,6 +52,7 @@ public:
   /// ModuleOptions - Module level options which can be set when
   /// registering a module with the interpreter.
 	std::string json;
+    std::string fjson;
   struct ModuleOptions {
     std::string LibraryDir;
     std::string EntryPoint;

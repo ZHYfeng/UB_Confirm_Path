@@ -311,7 +311,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/find_stp.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/find_z3.cmake)
 # metaSMT
 include(${CMAKE_SOURCE_DIR}/cmake/find_metasmt.cmake)
-
 if ((NOT ${ENABLE_Z3}) AND (NOT ${ENABLE_STP}) AND (NOT ${ENABLE_METASMT}))
   message(FATAL_ERROR "No solver was specified. At least one solver is required."
     "You should enable a solver by passing one of more the following options"
@@ -374,7 +373,7 @@ endif()
 ################################################################################
 # TCMalloc support
 ################################################################################
-OPTION(ENABLE_TCMALLOC "Enable TCMalloc support" ON)
+OPTION(ENABLE_TCMALLOC "Enable TCMalloc support" OFF)
 if (ENABLE_TCMALLOC)
   message(STATUS "TCMalloc support enabled")
   set(TCMALLOC_HEADER "gperftools/malloc_extension.h")

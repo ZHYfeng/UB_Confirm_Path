@@ -1558,7 +1558,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     i->dump();
 #endif
 
-    if(i->getParent()->getTerminator() == i){
+    if (i->getParent()->getTerminator() == i) {
         int result;
         result = state.encode.checkList(i->getParent());
         if (result == -1) {
@@ -1568,14 +1568,14 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     }
 
 
-    if(this->symbolic.isWarning(state, ki) == 1 ){
+    if (this->symbolic.isWarning(state, ki) == 1) {
         state.encode.warningL = true;
 
     }
 
-    if(state.encode.warningL){
+    if (state.encode.warningL) {
 //        state.encode.warningL = false;
-        if(!state.encode.ckeck){
+        if (!state.encode.ckeck) {
             int result;
             state.encode.checkUseList(i->getParent());
             result = state.encode.flag;
@@ -1701,7 +1701,6 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                     statsTracker->markBranchVisited(branches.first, branches.second);
 
 
-
                 std::string ld;
                 llvm::raw_string_ostream rso(ld);
                 i->print(rso);
@@ -1718,14 +1717,14 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                 if (cond->getKind() != Expr::Constant) {
                     if (branches.first) {
                         result = branches.first->encode.addBrConstraint(cond, true, bi->getSuccessor(0)->getName(),
-                                                               bi->getSuccessor(1)->getName());
+                                                                        bi->getSuccessor(1)->getName());
                         if (result == -2) {
                             terminateState(*branches.first);
                         }
                     }
                     if (branches.second) {
                         result = branches.second->encode.addBrConstraint(cond, false, bi->getSuccessor(1)->getName(),
-                                                                bi->getSuccessor(0)->getName());
+                                                                         bi->getSuccessor(0)->getName());
                         if (result == -2) {
                             terminateState(*branches.second);
                         }
@@ -3804,9 +3803,9 @@ void Executor::executeMemoryOperation(ExecutionState &state,
 
                 bindLocal(target, state, result);
 #if DEBUGINFO
-          ref<Expr> value = getDestCell(state, target).value;
-          std::cerr << "load value :";
-          value->dump();
+                ref<Expr> value = getDestCell(state, target).value;
+                std::cerr << "load value :";
+                value->dump();
 #endif
                 symbolic.load(state, target);
             }
@@ -4071,6 +4070,8 @@ void Executor::runFunctionAsMain(Function *f,
 
     int envc;
     for (envc = 0; envp[envc]; ++envc);
+
+    set_fjson_map();
 
     ExecutionState *state = new ExecutionState(kmodule->functionMap[f]);
     state->encode.Json = this->json;
@@ -4376,4 +4377,36 @@ bool Executor::isGlobalMO(const MemoryObject *mo) {
         }
     }
     return result;
+}
+
+void Executor::set_fjson_map() {
+    std::ifstream fji("file.json");
+    fji >> this->FJson;
+    for (auto &e : this->FJson.items()) {
+        std::vector<std::string> name;
+        std::string temp = "";
+        std::string k = e.key();
+        for (uint64_t i = 0; i < k.length(); i++) {
+            if (k[i] == '#' && i + 1 < k.length() && k[i + 1] == '#') {
+                i++;
+                name.push_back(temp);
+                temp = "";
+            } else {
+                temp.push_back(k[i]);
+            }
+        }
+        name.push_back(temp);
+
+        std::string v = e.value();
+        for (uint64_t i = 0; i < v.length(); i++) {
+            if (v[i] == '#' && i + 1 < v.length() && v[i + 1] == '#') {
+                i++;
+                name.push_back(temp);
+                temp = "";
+            } else {
+                temp.push_back(v[i]);
+            }
+        }
+        name.push_back(temp);
+    }
 }

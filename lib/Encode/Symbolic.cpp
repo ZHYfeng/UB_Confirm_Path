@@ -321,7 +321,7 @@ namespace klee {
 
     void Symbolic::Alloca(ExecutionState &state, KInstruction *ki, unsigned size) {
         AllocaInst *ai = cast<AllocaInst>(ki->inst);
-        if(this->executor->eval(ki, 0, state).value->getKind() != Expr::Constant){
+        if (this->executor->eval(ki, 0, state).value->getKind() != Expr::Constant) {
             return;
         }
         if (ai->getAllocatedType()->getTypeID() == Type::IntegerTyID) {
@@ -388,19 +388,53 @@ namespace klee {
         llvm::Instruction *inst = ki->inst;
 
         if (inst->getOpcode() == Instruction::Load) {
-            ref<Expr> base = this->executor->eval(ki, 0, state).value;
-            ObjectPair op;
-            bool success = executor->getMemoryObject(op, state, &(state.addressSpace), base);
-            if (success) {
-            } else {
-                res = 0;
+            ref<Expr> address = this->executor->eval(ki, 0, state).value;
+            res = isAlloca(address);
+            if (res == 0) {
                 return res;
             }
+
+            Expr::Width type = executor->getWidthForLLVMType(ki->inst->getType());
+            unsigned bytes = Expr::getMinBytesForWidth(type);
+            address = executor->optimizer.optimizeExpr(address, true);
+            ObjectPair op;
+            bool success;
+            executor->solver->setTimeout(executor->coreSolverTimeout);
+            if (!state.addressSpace.resolveOne(state, executor->solver, address, op, success)) {
+                address = executor->toConstant(state, address, "resolveOne failure");
+                success = state.addressSpace.resolveOne(cast<ConstantExpr>(address), op);
+            }
+            executor->solver->setTimeout(time::Span());
+            if (success) {
+                const MemoryObject *mo = op.first;
+
+                ref<Expr> offset = mo->getOffsetExpr(address);
+                ref<Expr> check = mo->getBoundsCheckOffset(offset, bytes);
+                check = executor->optimizer.optimizeExpr(check, true);
+
+                bool inBounds;
+                executor->solver->setTimeout(executor->coreSolverTimeout);
+                bool success = executor->solver->mustBeTrue(state, check, inBounds);
+                executor->solver->setTimeout(time::Span());
+                if (success && inBounds) {
+                    const ObjectState *nos = state.addressSpace.findObject(mo);
+                    ref<Expr> result = nos->read(offset, type);
+                    res = isAlloca(result);
+                    if(res == 0){
+                        return  res;
+                    }
+                }
+            }
+
         } else if (inst->getOpcode() == Instruction::Alloca) {
-        } else if (inst->getOpcode() == Instruction::PHI) {
         } else if (inst->getOpcode() == Instruction::Store) {
 
             ref<Expr> base = this->executor->eval(ki, 1, state).value;
+            res = isAlloca(base);
+            if (res == 0) {
+                return res;
+            }
+
             ObjectPair op;
             bool success = executor->getMemoryObject(op, state, &(state.addressSpace), base);
             if (success) {
@@ -413,28 +447,10 @@ namespace klee {
 #if DEBUGINFO
             v->dump();
 #endif
-            if (v->getKind() == Expr::Concat) {
-                ConcatExpr *vv = cast<ConcatExpr>(v);
-                ReadExpr *revalue = cast<ReadExpr>(vv->getKid(0));
-                std::string name = revalue->updates.root->name;
-                if (name == allocaName) {
-                    res = 0;
-                    return res;
-                }
-            } else if(v->getKind() != Expr::Constant){
-                std::set<std::string> relatedSymbolicExpr;
-                resolveSymbolicExpr(v, relatedSymbolicExpr);
-                for(auto name : relatedSymbolicExpr) {
-                    if (name == allocaName) {
-                        res = 0;
-                        return res;
-                    }
-                }
+            res = isAlloca(v);
+            if (res == 0) {
+                return res;
             }
-
-//            if (v->getKind() != Expr::Constant) {
-//                res = 0;
-//            }
 
         } else {
 
@@ -455,29 +471,43 @@ namespace klee {
                     std::cerr << "operand : " << idx << "\n";
                     v->dump();
 #endif
-                    if (v->getKind() == Expr::Concat) {
-                        ConcatExpr *vv = cast<ConcatExpr>(v);
-                        ReadExpr *revalue = cast<ReadExpr>(vv->getKid(0));
-                        std::string name = revalue->updates.root->name;
-                        if (name == allocaName) {
-                            res = 0;
-                            return res;
-                        }
-                    } else if(v->getKind() != Expr::Constant){
-                        std::set<std::string> relatedSymbolicExpr;
-                        resolveSymbolicExpr(v, relatedSymbolicExpr);
-                        for(auto name : relatedSymbolicExpr) {
-                            if (name == allocaName) {
-                                res = 0;
-                                return res;
-                            }
-                        }
+                    res = isAlloca(v);
+                    if (res == 0) {
+                        return res;
                     }
+                } else {
+                    int vnumber = ki->operands[idx];
+                    if (vnumber == -1) {
+                        break;
+                    }
+                    ref<Expr> v = this->executor->eval(ki, idx, state).value;
+                    res = isAlloca(v);
+                    if (res == 0) {
+                        return res;
+                    }
+                }
+            }
+        }
+        return res;
+    }
 
-//                    if (v->getKind() != Expr::Constant) {
-//                        res = 0;
-//                    }
-
+    int Symbolic::isAlloca(ref<Expr> v) {
+        int res = -1;
+        if (v->getKind() == Expr::Concat) {
+            ConcatExpr *vv = cast<ConcatExpr>(v);
+            ReadExpr *revalue = cast<ReadExpr>(vv->getKid(0));
+            std::string name = revalue->updates.root->name;
+            if (name == allocaName) {
+                res = 0;
+                return res;
+            }
+        } else if (v->getKind() != Expr::Constant) {
+            std::set<std::string> relatedSymbolicExpr;
+            resolveSymbolicExpr(v, relatedSymbolicExpr);
+            for (auto name : relatedSymbolicExpr) {
+                if (name == allocaName) {
+                    res = 0;
+                    return res;
                 }
             }
         }
