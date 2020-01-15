@@ -3567,7 +3567,7 @@ void Executor::executeFree(ExecutionState &state,
                      ie = rl.end(); it != ie; ++it) {
             const MemoryObject *mo = it->first.first;
             if (mo->isLocal) {
-                terminateStateOnError(*it->second, "free of allocaCount", Free, NULL,
+                terminateStateOnError(*it->second, "free of alloca", Free, NULL,
                                       getAddressInfo(*it->second, address));
             } else if (mo->isGlobal) {
                 terminateStateOnError(*it->second, "free of global", Free, NULL,

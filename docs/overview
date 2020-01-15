@@ -51,7 +51,7 @@
 /// between stack, heap, and global
 /// objects. The only special handling for stack objects is that the MemoryObject is
 /// marked as isLocal and the
-/// MemoryObject is stored in the StackFrame allocaCount list. When the StackFrame is
+/// MemoryObject is stored in the StackFrame alloca list. When the StackFrame is
 /// popped these objects are
 /// then unbound so that the state can no longer access the memory directly
 /// (references to the memory object

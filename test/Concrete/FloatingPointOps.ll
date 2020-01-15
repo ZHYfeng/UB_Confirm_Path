@@ -96,7 +96,7 @@ return:
 ; test FPTrunc which casts doubles to floats
 define void @testFPTrunc() {
 entry:
-  %d_addr = allocaCount double, align 8
+  %d_addr = alloca double, align 8
   store double 8.000000e+00, double* %d_addr
   %d = load double, double* %d_addr
   %f = fptrunc double %d to float
@@ -109,7 +109,7 @@ entry:
 ; test FPExt which casts floats to doubles
 define void @testFPExt() {
 entry:
-  %f_addr = allocaCount float, align 4
+  %f_addr = alloca float, align 4
   store float 8.000000e+00, float* %f_addr
   %f = load float, float* %f_addr
   %d = fpext float %f to double
@@ -122,8 +122,8 @@ entry:
 ; test casting fp to an unsigned int
 define void @testFPToUI() {
 entry:
-  %f_addr = allocaCount float, align 4
-  %d_addr = allocaCount double, align 8
+  %f_addr = alloca float, align 4
+  %d_addr = alloca double, align 8
 
   ; test float to UI
   store float 0x4020333340000000, float* %f_addr; %f = 8.1
@@ -147,8 +147,8 @@ entry:
 ; test casting fp to a signed int
 define void @testFPToSI() {
 entry:
-  %f_addr = allocaCount float, align 4
-  %d_addr = allocaCount double, align 8
+  %f_addr = alloca float, align 4
+  %d_addr = alloca double, align 8
 
   ; test float 8.1 to signed int
   store float 0x4020333340000000, float* %f_addr
@@ -208,10 +208,10 @@ entry:
 ; testing fp division
 define void @testFDiv() {
 entry:
-  %fN_addr = allocaCount float, align 4
-  %fD_addr = allocaCount float, align 4
-  %dN_addr = allocaCount double, align 8
-  %dD_addr = allocaCount double, align 8
+  %fN_addr = alloca float, align 4
+  %fD_addr = alloca float, align 4
+  %dN_addr = alloca double, align 8
+  %dD_addr = alloca double, align 8
 
   ; float division
   store float 2.200000e+01, float* %fN_addr
@@ -239,10 +239,10 @@ entry:
 ; testing fp modulo
 define void @testFRem() {
 entry:
-  %fN_addr = allocaCount float, align 4
-  %fD_addr = allocaCount float, align 4
-  %dN_addr = allocaCount double, align 8
-  %dD_addr = allocaCount double, align 8
+  %fN_addr = alloca float, align 4
+  %fD_addr = alloca float, align 4
+  %dN_addr = alloca double, align 8
+  %dD_addr = alloca double, align 8
 
   ; float modoulo
   store float 2.200000e+01, float* %fN_addr
@@ -270,10 +270,10 @@ entry:
 ; test addition
 define void @testAdd() {
 entry:
-  %f1_addr = allocaCount float, align 4
-  %f2_addr = allocaCount float, align 4
-  %d1_addr = allocaCount double, align 8
-  %d2_addr = allocaCount double, align 8
+  %f1_addr = alloca float, align 4
+  %f2_addr = alloca float, align 4
+  %d1_addr = alloca double, align 8
+  %d2_addr = alloca double, align 8
 
   ; test integer addition (3 + 4)
   %sumi = add i32 3, 4
@@ -307,10 +307,10 @@ entry:
 ; test subtraction
 define void @testSub() {
 entry:
-  %f1_addr = allocaCount float, align 4
-  %f2_addr = allocaCount float, align 4
-  %d1_addr = allocaCount double, align 8
-  %d2_addr = allocaCount double, align 8
+  %f1_addr = alloca float, align 4
+  %f2_addr = alloca float, align 4
+  %d1_addr = alloca double, align 8
+  %d2_addr = alloca double, align 8
 
   ; test integer subtraction (3 - 4)
   %subi = sub i32 3, 4
@@ -344,10 +344,10 @@ entry:
 ; test multiplication
 define void @testMul() {
 entry:
-  %f1_addr = allocaCount float, align 4
-  %f2_addr = allocaCount float, align 4
-  %d1_addr = allocaCount double, align 8
-  %d2_addr = allocaCount double, align 8
+  %f1_addr = alloca float, align 4
+  %f2_addr = alloca float, align 4
+  %d1_addr = alloca double, align 8
+  %d2_addr = alloca double, align 8
 
   ; test integer multiplication (3 * 4)
   %muli = mul i32 3, 4
@@ -630,8 +630,8 @@ entry:
 ; test floating point comparisons (ordered and unordered) with a variety of real numbers and NaNs as operands
 define void @testFCmp() {
 entry:
-  %x = allocaCount i64, align 8
-  %nan = allocaCount double, align 8
+  %x = alloca i64, align 8
+  %nan = alloca double, align 8
 
   ; test FCmp on some real number inputs
   call void @testFCmpBoth( double 0.000000e+00, double 0.000000e+00, i1 1, i1 1, i1 0, i1 1, i1 0, i1 0, i1 1, i1 0 )

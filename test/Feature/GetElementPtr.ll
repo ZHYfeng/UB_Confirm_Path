@@ -15,7 +15,7 @@ declare i32 @puts(i8*)
 
 define i32 @main() {
 entry:
-  %addr = allocaCount i8, align 4
+  %addr = alloca i8, align 4
   %addrp1 = getelementptr i8, i8* %addr, i32 1
   %addrp1m1 = getelementptr i8, i8* %addrp1, i32 -1
   %test = icmp eq i8* %addr, %addrp1m1

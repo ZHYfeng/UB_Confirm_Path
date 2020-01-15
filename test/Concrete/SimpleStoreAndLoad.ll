@@ -7,7 +7,7 @@ declare void @print_i32(i32)
 
 define i32 @main() {
 entry:
-	%a = allocaCount i32, i32 4
+	%a = alloca i32, i32 4
 	%tmp1 = getelementptr i32, i32* %a, i32 0
 	store i32 0, i32* %tmp1
 	%tmp2 = load i32, i32* %tmp1
