@@ -1567,52 +1567,29 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         }
     }
 
+    state.encode.checkUseList(i->getParent()->getName());
 
-    if (this->symbolic.isWarning(state, ki) == 1) {
-        state.encode.warningL = true;
-
-    }
-
-    if (state.encode.warningL) {
-//        state.encode.warningL = false;
-        if (!state.encode.ckeck) {
-            int result;
-            state.encode.checkUseList(i->getParent());
-            result = state.encode.flag;
-            if (result == -1) {
-                terminateState(state);
-                return;
-            } else if (result == 0) {
-                state.encode.optput();
-                exit(0);
-            } else if (result == -2) {
-                state.encode.optput();
-            }
-        } else if (state.encode.ckeck) {
-            if (this->symbolic.checkInst(state, ki) == 0) {
-#if DEBUGINFO
-                std::cerr << "checkInst : 0" << "\n";
-#endif
-                int result;
-                state.encode.checkUseList(i->getParent());
-                result = state.encode.flag;
-                if (result == -1) {
-                    terminateState(state);
-                    return;
-                } else if (result == 0) {
-                    state.encode.optput();
-                    exit(0);
-                } else if (result == -2) {
-                    state.encode.optput();
-                }
-            } else {
-#if DEBUGINFO
-                std::cerr << "checkInst : !0" << "\n";
-#endif
-            }
+    if (state.encode.ckeck){
+        this->symbolic.isWarning(state, ki);
+        if (state.encode.warningL) {
+            state.encode.checkConditions();
         }
     }
 
+    int result;
+    result = state.encode.flag;
+    if (result == -1) {
+        terminateState(state);
+        // black list
+        return;
+    } else if (result == 0) {
+        state.encode.output();
+        exit(0);
+        // find
+    } else if (result == -2) {
+        state.encode.output();
+        // alt
+    }
 
     switch (i->getOpcode()) {
         // Control flow
@@ -2292,7 +2269,8 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                 size = MulExpr::create(size, count);
             }
             executeAlloc(state, size, true, ki);
-            this->symbolic.Alloca(state, ki, elementSize);
+            this->createAlloca(state, ki);
+//            this->symbolic.Alloca(state, ki, elementSize);
             break;
         }
 
@@ -3589,7 +3567,7 @@ void Executor::executeFree(ExecutionState &state,
                      ie = rl.end(); it != ie; ++it) {
             const MemoryObject *mo = it->first.first;
             if (mo->isLocal) {
-                terminateStateOnError(*it->second, "free of alloca", Free, NULL,
+                terminateStateOnError(*it->second, "free of allocaCount", Free, NULL,
                                       getAddressInfo(*it->second, address));
             } else if (mo->isGlobal) {
                 terminateStateOnError(*it->second, "free of global", Free, NULL,
@@ -3975,72 +3953,90 @@ ref<Expr> Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 	std::cerr << ty->getTypeID() << "\n";
 #endif
 
-    switch (ty->getTypeID()) {
-        case llvm::Type::PointerTyID: {
-            if (PointerType *pt = dyn_cast<PointerType>(ty)) {
-                Type *kind = pt->getElementType();
-                if (kind->isSized()) {
-                    size = kmodule->targetData->getTypeStoreSize(kind);
-                }
-                MemoryObject *mo = memory->allocate(size,
-                        /*isLocal=*/false, /*isGlobal=*/false,
-                        /*allocSite=*/first, /*alignment=*/8);
-                bindObjectInState(state, mo, false);
-                expr = mo->getBaseExpr();
-                ObjectState *os = bindObjectInState(state, mo, false);
-                os->initialize = false;
-//			ref<Expr> kexpr = createSymbolicArg(state, kind, first);
-//			os->write(NumPtrBytes, kexpr);
+    std::stringstream ss;
+    ss << this->symbolic.inputName << this->symbolic.inputCount;
+    std::string name = ss.str();
+    this->symbolic.inputCount++;
 
-            }
-            break;
-        }
-        case llvm::Type::IntegerTyID: {
-            if (IntegerType *it = dyn_cast<IntegerType>(ty)) {
-
-                std::stringstream ss;
-                ss << "input_" << argNum;
-                std::string name = ss.str();
-
-                argNum++;
-                if (ty->isSized()) {
-                    size = kmodule->targetData->getTypeStoreSize(ty);
-                }
-                MemoryObject *mo = memory->allocate(size,
-                        /*isLocal=*/false, /*isGlobal=*/false,
-                        /*allocSite=*/first, /*alignment=*/8);
-
-                executeMakeSymbolic(state, mo, name);
-                const ObjectState *os = state.addressSpace.findObject(mo);
-                expr = os->read(0, it->getBitWidth());
-                state.encode.globalname.push_back(name);
-                state.encode.globalexpr.push_back(expr);
-
-            }
-            break;
-        }
-        case llvm::Type::StructTyID: {
-            if (StructType *st = dyn_cast<StructType>(ty)) {
-                if (ty->isSized()) {
-                    size = kmodule->targetData->getTypeStoreSize(ty);
-                }
-                MemoryObject *mo = memory->allocate(size,
-                        /*isLocal=*/false, /*isGlobal=*/true,
-                        /*allocSite=*/first, /*alignment=*/8);
-                for (Type::subtype_iterator ae = st->element_begin(); ae != st->element_end();) {
-                    ae++;
-//				MemoryObject *mo = createSymbolicArg(state, *ae, first);
-                }
-                expr = mo->getBaseExpr();
-                assert("StructTyID" && 0);
-
-            }
-            break;
-        }
-        default: {
-
-        }
+    if (ty->isSized()) {
+        size = kmodule->targetData->getTypeStoreSize(ty);
     }
+    MemoryObject *mo = memory->allocate(size,
+            /*isLocal=*/false, /*isGlobal=*/false,
+            /*allocSite=*/first, /*alignment=*/8);
+
+    executeMakeSymbolic(state, mo, name);
+    const ObjectState *os = state.addressSpace.findObject(mo);
+    expr = os->read(0, kmodule->targetData->getTypeSizeInBits(ty));
+    state.encode.globalname.push_back(name);
+    state.encode.globalexpr.push_back(expr);
+//
+//    switch (ty->getTypeID()) {
+//        case llvm::Type::PointerTyID: {
+//            if (PointerType *pt = dyn_cast<PointerType>(ty)) {
+//                Type *kind = pt->getElementType();
+//                if (kind->isSized()) {
+//                    size = kmodule->targetData->getTypeStoreSize(kind);
+//                }
+//                MemoryObject *mo = memory->allocate(size,
+//                        /*isLocal=*/false, /*isGlobal=*/false,
+//                        /*allocSite=*/first, /*alignment=*/8);
+//                bindObjectInState(state, mo, false);
+//                expr = mo->getBaseExpr();
+//                ObjectState *os = bindObjectInState(state, mo, false);
+//                os->initialize = false;
+////			ref<Expr> kexpr = createSymbolicArg(state, kind, first);
+////			os->write(NumPtrBytes, kexpr);
+//
+//            }
+//            break;
+//        }
+//        case llvm::Type::IntegerTyID: {
+//            if (IntegerType *it = dyn_cast<IntegerType>(ty)) {
+//
+//                std::stringstream ss;
+//                ss << "input_" << argNum;
+//                std::string name = ss.str();
+//
+//                argNum++;
+//                if (ty->isSized()) {
+//                    size = kmodule->targetData->getTypeStoreSize(ty);
+//                }
+//                MemoryObject *mo = memory->allocate(size,
+//                        /*isLocal=*/false, /*isGlobal=*/false,
+//                        /*allocSite=*/first, /*alignment=*/8);
+//
+//                executeMakeSymbolic(state, mo, name);
+//                const ObjectState *os = state.addressSpace.findObject(mo);
+//                expr = os->read(0, it->getBitWidth());
+//                state.encode.globalname.push_back(name);
+//                state.encode.globalexpr.push_back(expr);
+//
+//            }
+//            break;
+//        }
+//        case llvm::Type::StructTyID: {
+//            if (StructType *st = dyn_cast<StructType>(ty)) {
+//                if (ty->isSized()) {
+//                    size = kmodule->targetData->getTypeStoreSize(ty);
+//                }
+//                MemoryObject *mo = memory->allocate(size,
+//                        /*isLocal=*/false, /*isGlobal=*/true,
+//                        /*allocSite=*/first, /*alignment=*/8);
+//                for (Type::subtype_iterator ae = st->element_begin(); ae != st->element_end();) {
+//                    ae++;
+////				MemoryObject *mo = createSymbolicArg(state, *ae, first);
+//                }
+//                expr = mo->getBaseExpr();
+//                assert("StructTyID" && 0);
+//
+//            }
+//            break;
+//        }
+//        default: {
+//
+//        }
+//    }
 #if DEBUGINFO
                                                                                                                             std::cerr << "expr : ";
 	expr->dump();
@@ -4380,7 +4376,12 @@ bool Executor::isGlobalMO(const MemoryObject *mo) {
 }
 
 void Executor::set_fjson_map() {
-    std::ifstream fji("file.json");
+
+    if(this->fjson == ""){
+        return;
+    }
+
+    std::ifstream fji(this->fjson);
     fji >> this->FJson;
     for (auto &e : this->FJson.items()) {
         std::vector<std::string> name;
@@ -4409,4 +4410,30 @@ void Executor::set_fjson_map() {
         }
         name.push_back(temp);
     }
+}
+
+ref<Expr> Executor::createAlloca(ExecutionState &state, KInstruction *ki) {
+
+    std::stringstream ss;
+    ss << this->symbolic.allocaName << this->symbolic.allocaCount;
+    std::string name = ss.str();
+    this->symbolic.allocaCount++;
+
+    AllocaInst *ai = cast<AllocaInst>(ki->inst);
+    uint64_t size = 0;
+    auto ty = ai->getAllocatedType();
+    if (ty->isSized()) {
+        size = kmodule->targetData->getTypeStoreSize(ty);
+    }
+    MemoryObject *mo = memory->allocate(size,
+            /*isLocal=*/false, /*isGlobal=*/false,
+            /*allocSite=*/ki->inst, /*alignment=*/8);
+
+    executeMakeSymbolic(state, mo, name);
+    const ObjectState *os = state.addressSpace.findObject(mo);
+    ref<Expr> expr = os->read(0, kmodule->targetData->getTypeSizeInBits(ty));
+    state.encode.globalname.push_back(name);
+    state.encode.globalexpr.push_back(expr);
+
+    return expr;
 }

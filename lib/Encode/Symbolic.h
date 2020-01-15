@@ -36,16 +36,21 @@ private:
 	std::map<uint64_t, unsigned> storeRecord;
 	Executor* executor;
 	std::string json;
-    std::string allocaName = "alloca";
 public:
 	void load(ExecutionState &state, KInstruction *ki);
 	void callReturnValue(ExecutionState &state, KInstruction *ki, Function *function);
 	void Alloca(ExecutionState &state, KInstruction *ki, unsigned size);
-    int isWarning(ExecutionState &state, KInstruction *ki);
+    static void isWarning(ExecutionState &state, KInstruction *ki);
     int checkInst(ExecutionState &state, KInstruction *ki);
-    int isAlloca(ref<Expr> v);
+    int isAllocaOrInput(ref<Expr> v);
     std::string getName(ref<klee::Expr> value);
     void resolveSymbolicExpr(ref<klee::Expr> symbolicExpr, std::set<std::string> &relatedSymbolicExpr);
+
+    std::string inputName = "input";
+    uint64_t inputCount = 0;
+    std::string allocaName = "alloca";
+    uint64_t allocaCount = 0;
+
 private:
 	ref<Expr> manualMakeSymbolic(std::string name, unsigned size);
 	ref<Expr> readExpr(ExecutionState &state, ref<Expr> address,

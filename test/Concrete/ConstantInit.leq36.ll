@@ -6,7 +6,7 @@ declare void @print_i64(i64)
 
 define void @test_constant_vector_simple() {
   entry:
-	%a = alloca %struct.dirent
+	%a = allocaCount %struct.dirent
 	%tmp1 = getelementptr %struct.dirent* %a, i32 0
 	%tmp2 = bitcast %struct.dirent* %tmp1 to <2 x i64>*
 	; Initialize with constant vector parsed as ConstantDataSequential
@@ -29,7 +29,7 @@ exit:
 define void @test_constant_vector_complex() {
 entry:
     ; Create a vector using an uncommon type: i1024: Force usage of constant vector
-	%a = alloca <2 x i1024>
+	%a = allocaCount <2 x i1024>
 	store <2 x i1024> <i1024 5, i1024 1024>, <2 x i1024>* %a, align 8
 
 	br label %exit

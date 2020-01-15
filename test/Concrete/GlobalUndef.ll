@@ -10,7 +10,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define i32 @main() nounwind  {
 entry:
-  %retval = alloca i32, align 4
+  %retval = allocaCount i32, align 4
   store i32 0, i32* %retval
   ret i32 0
 }

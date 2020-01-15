@@ -16,7 +16,7 @@ declare void @klee_print_expr(i8*, ...)
 
 define i32 @main() {
 entry:
-	%a = alloca %struct.dirent
+	%a = allocaCount %struct.dirent
 	%tmp1 = getelementptr %struct.dirent, %struct.dirent* %a, i32 0
 	%tmp2 = bitcast %struct.dirent* %tmp1 to <2 x i32>*
 	; Initialize with constant vector
@@ -36,7 +36,7 @@ exit:
 	; CHECK: 1:4096
 	
 	; Initialize with constant array
-	%array = alloca [2 x i32];
+	%array = allocaCount [2 x i32];
 	store [2 x i32][i32 7, i32 9], [2 x i32]* %array
 
 	; Print first initialized element

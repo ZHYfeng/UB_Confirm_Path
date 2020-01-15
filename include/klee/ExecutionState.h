@@ -53,7 +53,7 @@ struct StackFrame {
   unsigned minDistToUncoveredOnReturn;
 
   // For vararg functions: arguments not passed via parameter are
-  // stored (packed tightly) in a local (alloca) memory object. This
+  // stored (packed tightly) in a local (allocaCount) memory object. This
   // is set up to match the way the front-end generates vaarg code (it
   // does not pass vaarg through as expected). VACopy is lowered inside
   // of intrinsic lowering.

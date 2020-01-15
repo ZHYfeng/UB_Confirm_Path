@@ -33,7 +33,7 @@ namespace klee {
 
     Encode::Encode() :
             z3_ctxx(new context()), z3_solverr(*z3_ctxx), kq(*z3_ctxx), flag(1), warning("") {
-        ckeck = true;
+        ckeck = false;
         warningL = false;
     }
 
@@ -179,7 +179,7 @@ namespace klee {
         std::stringstream ss;
         temp = json["warning"].dump();
         j = temp.find("!");
-        if(j >= temp.size()){
+        if (j >= temp.size()) {
             for (unsigned int i = 1; i < temp.size() - 1; i++) {
                 ss << temp.at(i);
             }
@@ -193,6 +193,7 @@ namespace klee {
             std::cerr << "warning : " << this->warning << "\n";
 #endif
         }
+        this->getWord(this->warning, this->warningWord);
 
 //	std::ifstream whitelist(WhiteList);
 //	if (whitelist.is_open()) {
@@ -331,121 +332,15 @@ namespace klee {
         }
     }
 
-    void Encode::checkUseList(llvm::BasicBlock *bb) {
-        llvm::StringRef label = bb->getName();
+    void Encode::checkUseList(llvm::StringRef label) {
         if (whiteList.size() == flag) {
-            for (unsigned i = 0; i < useList.size(); i++) {
+            this->ckeck = false;
+            for (const auto &i : useList) {
 #if DEBUGINFO
-                llvm::errs() << "useList : " << useList[i] << "\n";
+                llvm::errs() << "useList : " << i << "\n";
 #endif
-                if (useList[i] == label.str()) {
-                    for (unsigned int i = 0; i < constraintexpr.size(); i++) {
-#if DEBUGINFO 
-                        std::cerr << constraintexpr[i] << "\n";
-#endif
-                        z3_solverr.add(constraintexpr[i]);
-                    }
-                    check_result result = z3_solverr.check();
-                    if (result == z3::sat) {
-                        model m = z3_solverr.get_model();
-#if DEBUGINFO
-                        std::cerr << "Yes!\n";
-                        std::cerr << "\nz3_solver.get_model()\n";
-                        std::cerr << "\n" << m << "\n";
-#endif
-                        json["find"] = "Yes";
-			std::string fileName = json["bc"];
-			std::string temp = fileName.substr(0, fileName.size()-2);
-			std::cout << "[SrcCode] " << temp << "c +" << json["lineNo"] << std::endl;
-                        std::stringstream ss;
-                        ss.str("");
-                        for (unsigned int i = 0; i < path_name.size(); i++) {
-                            json["path"][i] = path_name[i];
-                        }
-
-                        for (unsigned int i = 0; i < globalexpr.size(); i++) {
-                            ss.str("");
-                            ss << m.eval(kq.getZ3Expr(globalexpr.at(i)));
-                            json["symbolic"][globalname.at(i)] = ss.str();
-                        }
-                        int allkind[10] = {0};
-                        std::vector<std::string> alt_name;
-                        for (std::vector<ref<Expr>>::iterator it =
-                                constraintExpr.begin(), ie = constraintExpr.end();
-                             it != ie; it++) {
-                            std::set<std::string> relatedSymbolicExpr;
-                            resolveSymbolicExpr((*it), relatedSymbolicExpr);
-                            for (std::set<std::string>::iterator iit =
-                                    relatedSymbolicExpr.begin(), iie =
-                                    relatedSymbolicExpr.end(); iit != iie; iit++) {
-                                if ((*iit).find("con") <= (*iit).size()) {
-                                    allkind[0] = 1;
-                                }
-                                if ((*iit).find("noaddr") <= (*iit).size()) {
-                                    allkind[1] = 1;
-                                }
-                                if ((*iit).find("erroraddr") <= (*iit).size()) {
-                                    allkind[2] = 1;
-                                }
-                                if ((*iit).find("input") <= (*iit).size()) {
-                                    allkind[3] = 1;
-                                }
-                                if ((*iit).find("return") <= (*iit).size()) {
-                                    allkind[4] = 1;
-                                }
-                                if ((*iit).find("arg") <= (*iit).size()) {
-                                    allkind[5] = 1;
-                                }
-                                for (auto alt : this->alt_blist) {
-                                    if ((*iit).find(alt) <= (*iit).size()) {
-                                        allkind[6] = 1;
-                                        alt_name.push_back(alt);
-                                    }
-                                }
-
-                            }
-                        }
-                        std::string kind = "high";
-                        if (allkind[0] == 1) {
-                            kind += "+con";
-                        }
-                        if (allkind[1] == 1) {
-                            allkind[1] = 1;
-                            kind += "+noaddr";
-                        }
-                        if (allkind[2] == 1) {
-                            kind += "+erroraddr";
-                        }
-                        if (allkind[3] == 1) {
-                            kind += "+input";
-                        }
-                        if (allkind[4] == 1) {
-                            kind += "+return";
-                        }
-                        if (allkind[5] == 1) {
-                            kind += "+arg";
-                        }
-                        if (allkind[6] == 1) {
-                            kind += "+alt";
-                        }
-                        json["priority"] = kind;
-
-                        if (alt_name.size() > 0) {
-                            std::string tname;
-                            for (auto name : alt_name) {
-                                tname = tname + "+" + name;
-                            }
-                            json["alt_name"] = tname;
-                            flag = -2;
-                        } else {
-                            flag = 0;
-                        }
-
-                    } else if (result == z3::unknown) {
-
-                    } else if (result == z3::unsat) {
-                        std::cerr << "No!\n";
-                    }
+                if (i == label.str()) {
+                    this->ckeck = true;
                 }
             }
         }
@@ -552,12 +447,136 @@ namespace klee {
 #endif
     }
 
-    void Encode::optput() {
+    void Encode::output() {
 
         std::ofstream out_file("confirm_result.json",
                                std::ios_base::out | std::ios_base::app);
         out_file << json.dump() << "\n";
         out_file.close();
+    }
+
+    void Encode::checkConditions() {
+        for (unsigned int i = 0; i < constraintexpr.size(); i++) {
+#if DEBUGINFO
+            std::cerr << constraintexpr[i] << "\n";
+#endif
+            z3_solverr.add(constraintexpr[i]);
+        }
+        check_result result = z3_solverr.check();
+        if (result == z3::sat) {
+            model m = z3_solverr.get_model();
+#if DEBUGINFO
+            std::cerr << "Yes!\n";
+            std::cerr << "\nz3_solver.get_model()\n";
+            std::cerr << "\n" << m << "\n";
+#endif
+            json["find"] = "Yes";
+            std::string fileName = json["bc"];
+            std::string temp = fileName.substr(0, fileName.size() - 2);
+            std::cout << "[SrcCode] " << temp << "c +" << json["lineNo"] << std::endl;
+            std::stringstream ss;
+            ss.str("");
+            for (unsigned int i = 0; i < path_name.size(); i++) {
+                json["path"][i] = path_name[i];
+            }
+
+            for (unsigned int i = 0; i < globalexpr.size(); i++) {
+                ss.str("");
+                ss << m.eval(kq.getZ3Expr(globalexpr.at(i)));
+                json["symbolic"][globalname.at(i)] = ss.str();
+            }
+            int allkind[10] = {0};
+            std::vector<std::string> alt_name;
+            for (std::vector<ref<Expr>>::iterator it =
+                    constraintExpr.begin(), ie = constraintExpr.end();
+                 it != ie; it++) {
+                std::set<std::string> relatedSymbolicExpr;
+                resolveSymbolicExpr((*it), relatedSymbolicExpr);
+                for (std::set<std::string>::iterator iit =
+                        relatedSymbolicExpr.begin(), iie =
+                        relatedSymbolicExpr.end(); iit != iie; iit++) {
+                    if ((*iit).find("con") <= (*iit).size()) {
+                        allkind[0] = 1;
+                    }
+                    if ((*iit).find("noaddr") <= (*iit).size()) {
+                        allkind[1] = 1;
+                    }
+                    if ((*iit).find("erroraddr") <= (*iit).size()) {
+                        allkind[2] = 1;
+                    }
+                    if ((*iit).find("input") <= (*iit).size()) {
+                        allkind[3] = 1;
+                    }
+                    if ((*iit).find("return") <= (*iit).size()) {
+                        allkind[4] = 1;
+                    }
+                    if ((*iit).find("arg") <= (*iit).size()) {
+                        allkind[5] = 1;
+                    }
+                    for (auto alt : this->alt_blist) {
+                        if ((*iit).find(alt) <= (*iit).size()) {
+                            allkind[6] = 1;
+                            alt_name.push_back(alt);
+                        }
+                    }
+
+                }
+            }
+            std::string kind = "high";
+            if (allkind[0] == 1) {
+                kind += "+con";
+            }
+            if (allkind[1] == 1) {
+                allkind[1] = 1;
+                kind += "+noaddr";
+            }
+            if (allkind[2] == 1) {
+                kind += "+erroraddr";
+            }
+            if (allkind[3] == 1) {
+                kind += "+input";
+            }
+            if (allkind[4] == 1) {
+                kind += "+return";
+            }
+            if (allkind[5] == 1) {
+                kind += "+arg";
+            }
+            if (allkind[6] == 1) {
+                kind += "+alt";
+            }
+            json["priority"] = kind;
+
+            if (!alt_name.empty()) {
+                std::string tname;
+                for (const auto& name : alt_name) {
+                    tname = tname + "+" + name;
+                }
+                json["alt_name"] = tname;
+                flag = -2;
+            } else {
+                flag = 0;
+            }
+
+        } else if (result == z3::unknown) {
+
+        } else if (result == z3::unsat) {
+            std::cerr << "No!\n";
+        }
+    }
+
+    void Encode::getWord(const std::string &s, std::vector<std::string> &w) {
+
+        std::string temp;
+        for (char i : s) {
+            if (i == ' ') {
+                w.push_back(temp);
+                temp = "";
+            } else {
+                temp.push_back(i);
+            }
+        }
+
     }
 
 

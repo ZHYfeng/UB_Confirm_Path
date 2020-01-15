@@ -51,6 +51,7 @@ public:
     bool ckeck;
     bool warningL;
     std::string warning;
+    std::vector<std::string> warningWord;
 
 
 public:
@@ -59,7 +60,9 @@ public:
 			llvm::StringRef labelFalse);
 	void checkWhiteList(llvm::StringRef label);
 	void checkBlackList(llvm::StringRef label);
-	void checkUseList(llvm::BasicBlock *bb);
+	void checkUseList(llvm::StringRef label);
+	void checkConditions();
+
 	void checkBBCount(llvm::StringRef label);
     int checkList(llvm::BasicBlock *bb);
 	static std::string getName(ref<Expr> value);
@@ -67,7 +70,8 @@ public:
 	static void resolveSymbolicExpr(ref<Expr> value,
 			std::set<std::string> &relatedSymbolicExpr);
 	void addpath(std::string p);
-	void optput();
+	void output();
+    static void getWord(const std::string& s, std::vector<std::string> &w);
 };
 
 }

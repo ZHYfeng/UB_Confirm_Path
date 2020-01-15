@@ -177,17 +177,17 @@ namespace klee {
         ref<klee::ConstantExpr> toConstant(ExecutionState &state, ref<Expr> e,
                                            const char *purpose);
 
+        std::unique_ptr<KModule> kmodule;
+        MemoryManager *memory;
     private:
         static const char *TerminateReasonNames[];
 
         class TimerInfo;
 
-        std::unique_ptr<KModule> kmodule;
         InterpreterHandler *interpreterHandler;
         Searcher *searcher;
 
         ExternalDispatcher *externalDispatcher;
-        MemoryManager *memory;
         std::set<ExecutionState *> states;
         StatsTracker *statsTracker;
         TreeStreamWriter *pathWriter, *symPathWriter;
@@ -616,6 +616,8 @@ namespace klee {
 
         ref<Expr> createSymbolicArg(ExecutionState &state, Type *ty,
                                     Instruction *first);
+
+        ref<Expr> createAlloca(ExecutionState &state, KInstruction *ki);
 
         int argNum;
 

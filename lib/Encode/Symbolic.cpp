@@ -320,57 +320,55 @@ namespace klee {
     }
 
     void Symbolic::Alloca(ExecutionState &state, KInstruction *ki, unsigned size) {
-        AllocaInst *ai = cast<AllocaInst>(ki->inst);
-        if (this->executor->eval(ki, 0, state).value->getKind() != Expr::Constant) {
-            return;
-        }
-        if (ai->getAllocatedType()->getTypeID() == Type::IntegerTyID) {
-            ref<Expr> symbolic = manualMakeSymbolic(allocaName, size * 8);
 
-            ObjectPair op;
-            ref<Expr> address = this->executor->getDestCell(state, ki).value;
-            ConstantExpr *realAddress = dyn_cast<ConstantExpr>(address);
-            if (realAddress) {
-                bool success = executor->getMemoryObject(op, state,
-                                                         &(state.addressSpace), address);
-                if (success) {
-                    const MemoryObject *mo = op.first;
-                    ref<Expr> offset = mo->getOffsetExpr(address);
-                    const ObjectState *os = op.second;
-                    if (os->readOnly) {
-                    } else {
-                        ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-                        wos->write(offset, symbolic);
-                    }
-                }
-            }
-
-        } else if (ai->getAllocatedType()->getTypeID() == Type::PointerTyID) {
-            ref<Expr> symbolic = manualMakeSymbolic(allocaName, BIT_WIDTH);
-
-            ObjectPair op;
-            ref<Expr> address = this->executor->getDestCell(state, ki).value;
-            ConstantExpr *realAddress = dyn_cast<ConstantExpr>(address);
-            if (realAddress) {
-                bool success = executor->getMemoryObject(op, state,
-                                                         &(state.addressSpace), address);
-                if (success) {
-                    const MemoryObject *mo = op.first;
-                    ref<Expr> offset = mo->getOffsetExpr(address);
-                    const ObjectState *os = op.second;
-                    if (os->readOnly) {
-                    } else {
-                        ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-                        wos->write(offset, symbolic);
-                    }
-                }
-            }
-        } else {
-#if DEBUGINFO
-            std::cerr << "Alloca state.encode.ckeck = false;" << "\n";
-#endif
-            state.encode.ckeck = false;
-        }
+//        AllocaInst *ai = cast<AllocaInst>(ki->inst);
+//        if (ai->getAllocatedType()->getTypeID() == Type::IntegerTyID) {
+//            ref<Expr> symbolic = manualMakeSymbolic(allocaName, size * 8);
+//
+//            ObjectPair op;
+//            ref<Expr> address = this->executor->getDestCell(state, ki).value;
+//            ConstantExpr *realAddress = dyn_cast<ConstantExpr>(address);
+//            if (realAddress) {
+//                bool success = executor->getMemoryObject(op, state,
+//                                                         &(state.addressSpace), address);
+//                if (success) {
+//                    const MemoryObject *mo = op.first;
+//                    ref<Expr> offset = mo->getOffsetExpr(address);
+//                    const ObjectState *os = op.second;
+//                    if (os->readOnly) {
+//                    } else {
+//                        ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+//                        wos->write(offset, symbolic);
+//                    }
+//                }
+//            }
+//
+//        } else if (ai->getAllocatedType()->getTypeID() == Type::PointerTyID) {
+//            ref<Expr> symbolic = manualMakeSymbolic(allocaName, BIT_WIDTH);
+//
+//            ObjectPair op;
+//            ref<Expr> address = this->executor->getDestCell(state, ki).value;
+//            ConstantExpr *realAddress = dyn_cast<ConstantExpr>(address);
+//            if (realAddress) {
+//                bool success = executor->getMemoryObject(op, state,
+//                                                         &(state.addressSpace), address);
+//                if (success) {
+//                    const MemoryObject *mo = op.first;
+//                    ref<Expr> offset = mo->getOffsetExpr(address);
+//                    const ObjectState *os = op.second;
+//                    if (os->readOnly) {
+//                    } else {
+//                        ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+//                        wos->write(offset, symbolic);
+//                    }
+//                }
+//            }
+//        } else {
+//#if DEBUGINFO
+//            std::cerr << "Alloca state.encode.ckeck = false;" << "\n";
+//#endif
+//            state.encode.ckeck = false;
+//        }
     }
 
     int Symbolic::checkInst(ExecutionState &state, KInstruction *ki) {
@@ -389,7 +387,7 @@ namespace klee {
 
         if (inst->getOpcode() == Instruction::Load) {
             ref<Expr> address = this->executor->eval(ki, 0, state).value;
-            res = isAlloca(address);
+            res = isAllocaOrInput(address);
             if (res == 0) {
                 return res;
             }
@@ -419,9 +417,9 @@ namespace klee {
                 if (success && inBounds) {
                     const ObjectState *nos = state.addressSpace.findObject(mo);
                     ref<Expr> result = nos->read(offset, type);
-                    res = isAlloca(result);
-                    if(res == 0){
-                        return  res;
+                    res = isAllocaOrInput(result);
+                    if (res == 0) {
+                        return res;
                     }
                 }
             }
@@ -430,7 +428,7 @@ namespace klee {
         } else if (inst->getOpcode() == Instruction::Store) {
 
             ref<Expr> base = this->executor->eval(ki, 1, state).value;
-            res = isAlloca(base);
+            res = isAllocaOrInput(base);
             if (res == 0) {
                 return res;
             }
@@ -447,7 +445,7 @@ namespace klee {
 #if DEBUGINFO
             v->dump();
 #endif
-            res = isAlloca(v);
+            res = isAllocaOrInput(v);
             if (res == 0) {
                 return res;
             }
@@ -471,7 +469,7 @@ namespace klee {
                     std::cerr << "operand : " << idx << "\n";
                     v->dump();
 #endif
-                    res = isAlloca(v);
+                    res = isAllocaOrInput(v);
                     if (res == 0) {
                         return res;
                     }
@@ -481,7 +479,7 @@ namespace klee {
                         break;
                     }
                     ref<Expr> v = this->executor->eval(ki, idx, state).value;
-                    res = isAlloca(v);
+                    res = isAllocaOrInput(v);
                     if (res == 0) {
                         return res;
                     }
@@ -491,13 +489,13 @@ namespace klee {
         return res;
     }
 
-    int Symbolic::isAlloca(ref<Expr> v) {
+    int Symbolic::isAllocaOrInput(ref<Expr> v) {
         int res = -1;
         if (v->getKind() == Expr::Concat) {
             ConcatExpr *vv = cast<ConcatExpr>(v);
             ReadExpr *revalue = cast<ReadExpr>(vv->getKid(0));
             std::string name = revalue->updates.root->name;
-            if (name == allocaName) {
+            if (name.find(this->inputName) || name.find(this->allocaName)) {
                 res = 0;
                 return res;
             }
@@ -505,7 +503,7 @@ namespace klee {
             std::set<std::string> relatedSymbolicExpr;
             resolveSymbolicExpr(v, relatedSymbolicExpr);
             for (auto name : relatedSymbolicExpr) {
-                if (name == allocaName) {
+                if (name.find(this->inputName) || name.find(this->allocaName)) {
                     res = 0;
                     return res;
                 }
@@ -514,16 +512,16 @@ namespace klee {
         return res;
     }
 
-    int Symbolic::isWarning(ExecutionState &state, KInstruction *ki) {
+    void Symbolic::isWarning(ExecutionState &state, KInstruction *ki) {
         llvm::Instruction *inst = ki->inst;
         std::string ld;
         llvm::raw_string_ostream rso(ld);
         inst->print(rso);
         std::stringstream ss;
-        unsigned int j = rso.str().find("!");
+        unsigned int j = rso.str().find('!');
         if (j >= rso.str().size()) {
-            for (unsigned int i = 0; i < rso.str().size(); i++) {
-                ss << rso.str().at(i);
+            for (char i : rso.str()) {
+                ss << i;
             }
         } else {
             for (unsigned int i = 0; i < j; i++) {
@@ -531,23 +529,36 @@ namespace klee {
             }
         }
 
+        std::vector<std::string> temp;
+        klee::Encode::getWord(ss.str(), temp);
+
+        if (temp.size() != state.encode.warningWord.size()) {
+            state.encode.warningL = false;
+        } else {
+            state.encode.warningL = true;
+            for (uint64_t i = 0; i < state.encode.warningWord.size(); i++) {
+                std::string w = state.encode.warningWord[i];
+                if (w.length() > 1) {
+                    if (w[0] == '%' && w[1] >= '0' && w[1] <= '9') {
+                        continue;
+                    }
+                }
+
+                if (w != temp[i]) {
+                    state.encode.warningL = false;
+                    break;
+                }
+            }
+        }
+
+
 #if DEBUGINFO
-        std::cerr << "isWarning : " << "\n";
+        std::cerr << "isWarning : " << state.encode.warningL << "\n";
         std::cerr << state.encode.warning << std::endl;
         std::cerr << ss.str() << std::endl;
         std::cerr << inst->getParent()->getName().str() << std::endl;
 #endif
-        if (state.encode.warning.compare(ss.str()) == 0) {
-#if DEBUGINFO
-            std::cerr << "state.encode.warning.compare : 0" << "\n";
-#endif
-            return 1;
-        } else {
-#if DEBUGINFO
-            std::cerr << "state.encode.warning.compare : !0" << "\n";
-#endif
-        }
-        return 0;
+
     }
 
 } /* namespace klee */

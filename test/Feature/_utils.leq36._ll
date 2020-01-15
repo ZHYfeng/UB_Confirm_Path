@@ -15,7 +15,7 @@ define i32 @util_make_or_i1(i32 %a, i32 %b) {
 }
 
 define i16 @util_make_concat2(i8 %a, i8 %b) {
-        %tmp = alloca i16
+        %tmp = allocaCount i16
         %tmp8 = bitcast i16* %tmp to i8*
         %p0 = getelementptr i8* %tmp8, i32 0
         %p1 = getelementptr i8* %tmp8, i32 1
@@ -26,7 +26,7 @@ define i16 @util_make_concat2(i8 %a, i8 %b) {
 }
 
 define i32 @util_make_concat4(i8 %a, i8 %b, i8 %c, i8 %d) {
-        %tmp = alloca i32
+        %tmp = allocaCount i32
         %tmp8 = bitcast i32* %tmp to i8*
         %p0 = getelementptr i8* %tmp8, i32 0
         %p1 = getelementptr i8* %tmp8, i32 1
@@ -42,7 +42,7 @@ define i32 @util_make_concat4(i8 %a, i8 %b, i8 %c, i8 %d) {
 
 define i64 @util_make_concat8(i8 %a, i8 %b, i8 %c, i8 %d, 
                               i8 %e, i8 %f, i8 %g, i8 %h) {
-        %tmp = alloca i64
+        %tmp = allocaCount i64
         %tmp8 = bitcast i64* %tmp to i8*
         %p0 = getelementptr i8* %tmp8, i32 0
         %p1 = getelementptr i8* %tmp8, i32 1

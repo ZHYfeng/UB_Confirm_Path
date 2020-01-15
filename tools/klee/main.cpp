@@ -78,7 +78,7 @@ namespace {
                  cl::init(""));
 
     cl::opt<std::string>
-            FJson("json",
+            FJson("fjson",
                   cl::desc("the warning json object"),
                   cl::init(""));
 
