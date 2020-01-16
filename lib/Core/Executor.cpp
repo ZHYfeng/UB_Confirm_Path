@@ -75,6 +75,7 @@
 #else
 
 #include "llvm/IR/CallSite.h"
+#include "../Encode/json11.hpp"
 
 #endif
 
@@ -441,7 +442,13 @@ Executor::setModule(std::vector<std::unique_ptr<llvm::Module>> &modules,
     kmodule->optimiseAndPrepare(opts, preservedFunctions);
 
     // 4.) Manifest the module
-    kmodule->manifest(interpreterHandler, StatsTracker::useStatistics());
+    std::string err;
+    const auto json = json11::Json::parse(this->json, err);
+    std::string id = json["id"].dump();
+    std::hash<std::string> h;
+    std::size_t hash = h(id);
+    std::string name = "../../" + std::to_string(hash);
+    kmodule->manifest(interpreterHandler, StatsTracker::useStatistics(), name);
 
     specialFunctionHandler->bind();
 

@@ -451,6 +451,10 @@ namespace klee {
 
         std::ofstream out_file("confirm_result.json",
                                std::ios_base::out | std::ios_base::app);
+        std::string id = json["id"].dump();
+        std::hash<std::string> h;
+        std::size_t hash = h(id);
+        json["hash"] = hash;
         out_file << json.dump() << "\n";
         out_file.close();
     }

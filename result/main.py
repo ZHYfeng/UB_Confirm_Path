@@ -66,7 +66,7 @@ class ProcessTimer:
         self.json = json
         self.json = self.json.replace("\n", "")
         # klee_cmd = klee_path + " -json=\'" + self.json + "\' " + "./built-in.bc 2>&1 | tee >> " + klee_log_file_name
-        klee_cmd = klee_path + " -json=\'" + self.json + "\' " + "./built-in.bc"
+        klee_cmd = klee_path + " -json=\'" + self.json + "\' " + " -fjson=../cg.json " + "./built-in.bc"
         self.klee_cmd = klee_cmd
         self.execution_state = False
 

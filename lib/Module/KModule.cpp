@@ -283,7 +283,7 @@ void KModule::optimiseAndPrepare(
   }
 }
 
-void KModule::manifest(InterpreterHandler *ih, bool forceSourceOutput) {
+void KModule::manifest(InterpreterHandler *ih, bool forceSourceOutput, std::string name) {
   if (OutputSource || forceSourceOutput) {
     std::unique_ptr<llvm::raw_fd_ostream> os(ih->openOutputFile("assembly.ll"));
     assert(os && !os->has_error() && "unable to open source output");
@@ -291,7 +291,11 @@ void KModule::manifest(InterpreterHandler *ih, bool forceSourceOutput) {
   }
 
   if (OutputModule) {
-    std::unique_ptr<llvm::raw_fd_ostream> f(ih->openOutputFile("final.bc"));
+      if(name.empty()){
+          name = "final.bc";
+      }
+      std::cerr << name << "\n";
+    std::unique_ptr<llvm::raw_fd_ostream> f(ih->openOutputFile(name));
 #if LLVM_VERSION_CODE >= LLVM_VERSION(7, 0)
     WriteBitcodeToFile(*module, *f);
 #else

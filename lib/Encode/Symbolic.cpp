@@ -562,6 +562,10 @@ namespace klee {
                         continue;
                     }
 
+                    if (w[0] == '%') {
+                        continue;
+                    }
+
 
                     if (w[0] == '#' && w[1] >= '0' && w[1] <= '9') {
                         continue;
