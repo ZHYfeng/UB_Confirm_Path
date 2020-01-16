@@ -622,7 +622,7 @@ namespace klee {
         int argNum;
 
         nlohmann::json FJson;
-        std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> fjson_map;
+        std::map<std::string, std::map<std::string, std::map<std::string, std::vector<std::string>*>*>*> fjson_map;
         void set_fjson_map();
 
     };

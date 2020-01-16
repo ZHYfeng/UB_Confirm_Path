@@ -178,7 +178,7 @@ namespace klee {
 
         std::stringstream ss;
         temp = json["warning"].dump();
-        j = temp.find("!");
+        j = temp.find('!');
         if (j >= temp.size()) {
             for (unsigned int i = 1; i < temp.size() - 1; i++) {
                 ss << temp.at(i);
@@ -549,7 +549,7 @@ namespace klee {
 
             if (!alt_name.empty()) {
                 std::string tname;
-                for (const auto& name : alt_name) {
+                for (const auto &name : alt_name) {
                     tname = tname + "+" + name;
                 }
                 json["alt_name"] = tname;
@@ -570,7 +570,9 @@ namespace klee {
         std::string temp;
         for (char i : s) {
             if (i == ' ') {
-                w.push_back(temp);
+                if (!temp.empty()){
+                    w.push_back(temp);
+                }
                 temp = "";
             } else {
                 temp.push_back(i);

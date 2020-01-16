@@ -40,7 +40,9 @@ public:
 	void load(ExecutionState &state, KInstruction *ki);
 	void callReturnValue(ExecutionState &state, KInstruction *ki, Function *function);
 	void Alloca(ExecutionState &state, KInstruction *ki, unsigned size);
+    static std::string getInst(llvm::Instruction *inst);
     static void isWarning(ExecutionState &state, KInstruction *ki);
+    static bool isInstSame(std::vector<std::string> inst1, std::vector<std::string> inst2);
     int checkInst(ExecutionState &state, KInstruction *ki);
     int isAllocaOrInput(ref<Expr> v);
     std::string getName(ref<klee::Expr> value);

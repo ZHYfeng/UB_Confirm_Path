@@ -91,6 +91,7 @@
 
 #include <errno.h>
 #include <cxxabi.h>
+#include <llvm/Bitcode/BitcodeWriter.h>
 
 using namespace llvm;
 using namespace klee;
@@ -1094,8 +1095,8 @@ Cell &Executor::uneval(KInstruction *ki, unsigned index,
         unsigned index = vnumber;
         StackFrame &sf = state.stack.back();
 #if DEBUGINFO
-                                                                                                                                std::cerr << "index : " << index << "\n";
-    state.dumpStack(llvm::errs());
+        std::cerr << "index : " << index << "\n";
+        state.dumpStack(llvm::errs());
 #endif
         return sf.locals[index];
     }
@@ -1569,7 +1570,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 
     state.encode.checkUseList(i->getParent()->getName());
 
-    if (state.encode.ckeck){
+    if (state.encode.ckeck) {
         this->symbolic.isWarning(state, ki);
         if (state.encode.warningL) {
             state.encode.checkConditions();
@@ -1710,16 +1711,16 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 
 
 #if DEBUGINFO
-                                                                                                                                        llvm::errs() << "first = " << branches.first << "\n";
-      llvm::errs() << "second = " << branches.second << "\n";
-      llvm::errs() << "br cond = ";
-      cond->dump();
-      llvm::errs() << "br label 0 name = " << bi->getSuccessor(0)->getName() << "\n";
-      llvm::errs() << "br label 0 = ";
-      bi->getSuccessor(0)->dump();
-      llvm::errs() << "br label 1 name = " << bi->getSuccessor(1)->getName() << "\n";
-      llvm::errs() << "br label 1 = ";
-      bi->getSuccessor(1)->dump();
+                llvm::errs() << "first = " << branches.first << "\n";
+                llvm::errs() << "second = " << branches.second << "\n";
+                llvm::errs() << "br cond = ";
+                cond->dump();
+                llvm::errs() << "br label 0 name = " << bi->getSuccessor(0)->getName() << "\n";
+                llvm::errs() << "br label 0 = ";
+                bi->getSuccessor(0)->dump();
+                llvm::errs() << "br label 1 name = " << bi->getSuccessor(1)->getName() << "\n";
+                llvm::errs() << "br label 1 = ";
+                bi->getSuccessor(1)->dump();
 #endif
             }
 
@@ -1951,6 +1952,72 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 
             for (unsigned j = 0; j < numArgs; ++j)
                 arguments.push_back(eval(ki, j + 1, state).value);
+
+            if (!f) {
+
+                auto b = ki->inst->getParent();
+                auto ff = b->getParent();
+                std::string fname = ff->getName();
+                if (this->fjson_map.find(fname) != this->fjson_map.end()) {
+                    auto m1 = this->fjson_map[fname];
+                    std::string bname = b->getName();
+                    if (m1->find(bname) != m1->end()) {
+                        auto m2 = (*m1)[bname];
+
+                        std::vector<std::string> call;
+                        std::string inst = Symbolic::getInst(i);
+                        klee::Encode::getWord(inst, call);
+#if DEBUGINFO
+                        std::cerr << "fcg : " << fname << "\n";
+                        std::cerr << "fcg : " << bname << "\n";
+                        std::cerr << "fcg : " << inst << "\n";
+                        for(auto w : call){
+                            std::cerr << "word: " << w << "\n";
+                        }
+#endif
+
+                        for (const auto &item : *m2) {
+
+#if DEBUGINFO
+                            std::cerr << "item.first : " << item.first << "\n";
+#endif
+
+                            std::vector<std::string> temp;
+                            klee::Encode::getWord(item.first, temp);
+
+#if DEBUGINFO
+                            for(auto w : temp){
+                                std::cerr << "word: " << w << "\n";
+                            }
+#endif
+
+
+
+                            if (Symbolic::isInstSame(call, temp)) {
+
+#if DEBUGINFO
+                                std::cerr << "find inst : " << item.first << "\n";
+#endif
+                                for (auto fff : *item.second) {
+#if DEBUGINFO
+                                    std::cerr << "fff : " << fff << "\n";
+#endif
+                                    f = this->kmodule->module->getFunction(fff);
+
+                                    if (f != nullptr) {
+#if DEBUGINFO
+                                        std::cerr << "find function : " << fff << "\n";
+#endif
+                                        break;
+                                    }
+
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
 
             if (f) {
                 const FunctionType *fType =
@@ -3948,9 +4015,9 @@ ref<Expr> Executor::createSymbolicArg(ExecutionState &state, Type *ty,
     ref<Expr> expr;
     unsigned int size = 0;
 #if DEBUGINFO
-                                                                                                                            ty->dump();
-	std::cerr << "getTypeID : ";
-	std::cerr << ty->getTypeID() << "\n";
+    ty->dump();
+    std::cerr << "getTypeID : ";
+    std::cerr << ty->getTypeID() << "\n";
 #endif
 
     std::stringstream ss;
@@ -4038,9 +4105,9 @@ ref<Expr> Executor::createSymbolicArg(ExecutionState &state, Type *ty,
 //        }
 //    }
 #if DEBUGINFO
-                                                                                                                            std::cerr << "expr : ";
-	expr->dump();
-	std::cerr << "size : " << size << "\n";
+    std::cerr << "expr : ";
+    expr->dump();
+    std::cerr << "size : " << size << "\n";
 #endif
     return expr;
 }
@@ -4377,38 +4444,78 @@ bool Executor::isGlobalMO(const MemoryObject *mo) {
 
 void Executor::set_fjson_map() {
 
-    if(this->fjson == ""){
+    if (this->fjson.empty()) {
         return;
     }
 
+    std::string line;
     std::ifstream fji(this->fjson);
-    fji >> this->FJson;
-    for (auto &e : this->FJson.items()) {
-        std::vector<std::string> name;
-        std::string temp = "";
-        std::string k = e.key();
-        for (uint64_t i = 0; i < k.length(); i++) {
-            if (k[i] == '#' && i + 1 < k.length() && k[i + 1] == '#') {
-                i++;
-                name.push_back(temp);
-                temp = "";
-            } else {
-                temp.push_back(k[i]);
-            }
-        }
-        name.push_back(temp);
+    while (getline(fji, line)) {
+        nlohmann::json fj = nlohmann::json::parse(line);
 
-        std::string v = e.value();
-        for (uint64_t i = 0; i < v.length(); i++) {
-            if (v[i] == '#' && i + 1 < v.length() && v[i + 1] == '#') {
-                i++;
-                name.push_back(temp);
-                temp = "";
+        for (auto &e : fj.items()) {
+            std::vector<std::string> name;
+            std::string temp;
+            std::string k = e.key();
+            for (uint64_t i = 0; i < k.length(); i++) {
+                if (k[i] == '#' && i + 1 < k.length() && k[i + 1] == '#') {
+                    i++;
+                    name.push_back(temp);
+                    temp = "";
+                } else {
+                    temp.push_back(k[i]);
+                }
+            }
+
+            std::stringstream ss;
+            uint64_t j = temp.find('!');
+            if (j >= temp.size()) {
+                for (unsigned int i = 1; i < temp.size() - 1; i++) {
+                    ss << temp.at(i);
+                }
+                temp = ss.str();
             } else {
-                temp.push_back(v[i]);
+                for (unsigned int i = 1; i < j; i++) {
+                    ss << temp.at(i);
+                }
+                temp = ss.str();
+            }
+
+            name.push_back(temp);
+            temp = "";
+
+            std::string v = e.value();
+            for (uint64_t i = 0; i < v.length(); i++) {
+                if (v[i] == '#' && i + 1 < v.length() && v[i + 1] == '#') {
+                    i++;
+                    name.push_back(temp);
+                    temp = "";
+                } else {
+                    temp.push_back(v[i]);
+                }
+            }
+            name.push_back(temp);
+
+#if DEBUGINFO
+            std::cerr << "cg:" << "\n";
+            for (auto i : name) {
+                std::cerr << i << "\n";
+            }
+
+#endif
+
+            if (name.size() > 2) {
+                auto m1 = new std::map<std::string, std::map<std::string, std::vector<std::string> *> *>;
+                this->fjson_map[name[0]] = m1;
+                auto m2 = new std::map<std::string, std::vector<std::string> *>;
+                (*m1)[name[1]] = m2;
+                auto v1 = new std::vector<std::string>;
+                (*m2)[name[2]] = v1;
+                for (uint64_t i = 3; i < name.size(); i++) {
+                    v1->push_back(name[i]);
+                }
             }
         }
-        name.push_back(temp);
     }
 }
 

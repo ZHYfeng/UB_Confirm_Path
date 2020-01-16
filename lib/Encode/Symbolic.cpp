@@ -512,8 +512,7 @@ namespace klee {
         return res;
     }
 
-    void Symbolic::isWarning(ExecutionState &state, KInstruction *ki) {
-        llvm::Instruction *inst = ki->inst;
+    std::string Symbolic::getInst(llvm::Instruction *inst) {
         std::string ld;
         llvm::raw_string_ostream rso(ld);
         inst->print(rso);
@@ -528,36 +527,54 @@ namespace klee {
                 ss << rso.str().at(i);
             }
         }
+        return ss.str();
+    }
+
+    void Symbolic::isWarning(ExecutionState &state, KInstruction *ki) {
+        llvm::Instruction *inst = ki->inst;
+        std::string s = getInst(inst);
 
         std::vector<std::string> temp;
-        klee::Encode::getWord(ss.str(), temp);
+        klee::Encode::getWord(s, temp);
 
-        if (temp.size() != state.encode.warningWord.size()) {
-            state.encode.warningL = false;
-        } else {
-            state.encode.warningL = true;
-            for (uint64_t i = 0; i < state.encode.warningWord.size(); i++) {
-                std::string w = state.encode.warningWord[i];
-                if (w.length() > 1) {
-                    if (w[0] == '%' && w[1] >= '0' && w[1] <= '9') {
-                        continue;
-                    }
-                }
-
-                if (w != temp[i]) {
-                    state.encode.warningL = false;
-                    break;
-                }
-            }
-        }
-
+        state.encode.warningL = isInstSame(state.encode.warningWord, temp);
 
 #if DEBUGINFO
         std::cerr << "isWarning : " << state.encode.warningL << "\n";
         std::cerr << state.encode.warning << std::endl;
-        std::cerr << ss.str() << std::endl;
+        std::cerr << s << std::endl;
         std::cerr << inst->getParent()->getName().str() << std::endl;
 #endif
+
+    }
+
+    bool Symbolic::isInstSame(std::vector<std::string> inst1, std::vector<std::string> inst2) {
+
+
+        if (inst1.size() != inst2.size()) {
+            return false;
+        } else {
+            bool res = true;
+            for (uint64_t i = 0; i < inst1.size(); i++) {
+                std::string w = inst1[i];
+                if (w.length() > 1) {
+                    if (w[0] == '%' && w[1] >= '0' && w[1] <= '9') {
+                        continue;
+                    }
+
+
+                    if (w[0] == '#' && w[1] >= '0' && w[1] <= '9') {
+                        continue;
+                    }
+                }
+
+                if (w != inst2[i]) {
+                    res = false;
+                    break;
+                }
+            }
+            return res;
+        }
 
     }
 

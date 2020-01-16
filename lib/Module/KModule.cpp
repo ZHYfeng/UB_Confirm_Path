@@ -75,7 +75,7 @@ namespace {
   cl::opt<bool>
   OutputModule("output-module",
                cl::desc("Write the bitcode for the final transformed module"),
-               cl::init(false));
+               cl::init(true));
 
   cl::opt<SwitchImplType>
   SwitchType("switch-type", cl::desc("Select the implementation of switch"),
